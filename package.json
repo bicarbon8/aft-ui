@@ -1,0 +1,36 @@
+{
+  "name": "aft-ui",
+  "version": "1.0.0",
+  "description": "Automation Framework for Testing (AFT) core package supporting UI testing via plugins",
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
+  "scripts": {
+    "pretest": "tsc",
+    "posttest": "",
+    "build": "tsc --declaration",
+    "test": "jasmine JASMINE_CONFIG_PATH=./jasmine.json",
+    "prepare": "tsc --declaration"
+  },
+  "keywords": [
+    "aft",
+    "automation",
+    "e2e",
+    "integration",
+    "functional",
+    "ui"
+  ],
+  "author": "Jason Holt Smith <bicarbon8@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "es6-promise": "^4.2.8",
+    "aft-core": "git+https://github.com/bicarbon8/aft-core.git"
+  },
+  "devDependencies": {
+    "@types/node": "^12.7.12",
+    "@types/jasmine": "^3.4.4",
+    "@types/selenium-webdriver": "4.0.5",
+    "selenium-webdriver": "4.0.0-alpha.5",
+    "jasmine": "^3.5.0",
+    "typescript": "^3.6.4"
+  }
+}
