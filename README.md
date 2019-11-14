@@ -186,7 +186,7 @@ export class BrowserStackSession implements ISession, IDisposable {
         try {
             let loc: selenium.By = this.getByForFacetLocator(locator);
             let elements: selenium.WebElement[] = await this.driver.findElements(loc);
-            return await IFacetProvider.process(elements);
+            return await IFacetProvider.process(...elements);
         } catch (e) {
             return Promise.reject(e);
         }
