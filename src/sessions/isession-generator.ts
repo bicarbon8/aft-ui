@@ -1,6 +1,7 @@
 import { ISession } from "./isession";
 import { SessionOptions } from "./session-options";
 import { UiConfig } from "../configuration/ui-config";
+import { Constructor } from "aft-core";
 
 export interface ISessionGenerator {
     /**
@@ -12,13 +13,14 @@ export interface ISessionGenerator {
 }
 
 export namespace ISessionGenerator {
-    type Constructor<T> = {
-        new (...args: any[]): T;
-        readonly prototype: T;
-    }
-    
     const generators: ISessionGenerator[] = [];
 
+    /**
+     * instantiates a new Session using the 'session_provider' specified in 
+     * configuration or the passed in SessionOptions
+     * @param options optional set of configuration used when generating the session.
+     * if not specified, the values from UiConfig will be used instead
+     */
     export async function get(options?: SessionOptions): Promise<ISession> {
         if (!options) {
             options = new SessionOptions();

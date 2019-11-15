@@ -1,4 +1,5 @@
 import { IFacet } from "./ifacet";
+import { Constructor } from "aft-core";
 
 export interface IFacetProvider {
     name: string;
@@ -7,10 +8,6 @@ export interface IFacetProvider {
 }
 
 export namespace IFacetProvider {
-    type Constructor<T> = {
-        new (...args: any[]): T;
-        readonly prototype: T;
-    }
     const providers: IFacetProvider[] = [];
     export async function process(...elements: any[]): Promise<IFacet[]> {
         if (elements && elements.length > 0) {

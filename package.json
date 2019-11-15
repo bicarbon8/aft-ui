@@ -22,8 +22,8 @@
   "author": "Jason Holt Smith <bicarbon8@gmail.com>",
   "license": "MIT",
   "dependencies": {
-    "es6-promise": "^4.2.8",
-    "aft-core": "git+https://github.com/bicarbon8/aft-core.git"
+    "aft-core": "git+https://github.com/bicarbon8/aft-core.git",
+    "es6-promise": "^4.2.8"
   },
   "devDependencies": {
     "@types/node": "^12.7.12",
