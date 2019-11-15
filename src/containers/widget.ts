@@ -1,11 +1,11 @@
-import { WidgetOptions } from './widget-options'
+import { ContainerOptions } from './container-options'
 import { Wait } from 'aft-core';
 import { ISession } from '../sessions/isession';
 import { IFacet } from './ifacet';
 import { FacetLocator } from './facet-locator';
 
 export abstract class Widget {
-    container: ISession;
+    session: ISession;
     index: number;
     maxWaitMs: number;
     cacheRootElement: boolean;
@@ -15,11 +15,11 @@ export abstract class Widget {
 
     private cachedRoot: IFacet;
 
-    constructor(options?: WidgetOptions) {
+    constructor(options?: ContainerOptions) {
         if (!options) {
-            options = new WidgetOptions();
+            options = new ContainerOptions();
         }
-        this.container = options.sessionManager;
+        this.session = options.session;
         this.index = options.index;
         this.maxWaitMs = options.maxWaitMs;
         this.cacheRootElement = options.cacheRootElement;
@@ -31,7 +31,7 @@ export abstract class Widget {
         }
 
         await Wait.forCondition(async () => {
-            let possibleRoots: IFacet[] = await this.container.find(this.locator);
+            let possibleRoots: IFacet[] = await this.session.find(this.locator);
             if (possibleRoots.length > this.index) {
                 let el: IFacet = possibleRoots[this.index];
                 if (el) {
@@ -47,9 +47,9 @@ export abstract class Widget {
         return Promise.resolve(this.cachedRoot);
     }
 
-    async getWidget<T extends Widget>(c: new (options: WidgetOptions) => T, options?: WidgetOptions): Promise<T> {
+    async getWidget<T extends Widget>(c: new (options: ContainerOptions) => T, options?: ContainerOptions): Promise<T> {
         if (!options) {
-            options = new WidgetOptions(this.container);
+            options = new ContainerOptions(this.session);
         }
         let widget: T = new c(options);
         await widget.waitUntilDoneLoading();

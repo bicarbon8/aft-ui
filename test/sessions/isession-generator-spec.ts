@@ -5,7 +5,7 @@ import { FakeSession } from "./fake-session";
 import './fake-session-generator';
 
 describe('ISessionGenerator', () => {
-    it('can get container by name', async () => {
+    it('can get session by name', async () => {
         let opts: SessionOptions = new SessionOptions();
         opts.provider = FakeSession.name;
 
@@ -17,7 +17,7 @@ describe('ISessionGenerator', () => {
         expect(tc.options.provider).toEqual(opts.provider);
     });
 
-    it('can get container by configuration', async () => {
+    it('can get session by configuration', async () => {
         let provider: string = FakeSession.name;
         UiConfig.provider(provider);
 
@@ -29,7 +29,7 @@ describe('ISessionGenerator', () => {
         expect(tc.options.provider).toEqual(provider);
     });
 
-    it('Promise rejected if named container provider not found', async () => {
+    it('Promise rejected if named session provider not found', async () => {
         let opts: SessionOptions = new SessionOptions();
         opts.provider = 'nonexisting';
 
