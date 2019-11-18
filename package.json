@@ -26,10 +26,8 @@
     "es6-promise": "^4.2.8"
   },
   "devDependencies": {
-    "@types/node": "^12.7.12",
     "@types/jasmine": "^3.4.4",
-    "@types/selenium-webdriver": "4.0.5",
-    "selenium-webdriver": "4.0.0-alpha.5",
+    "@types/node": "^12.7.12",
     "jasmine": "^3.5.0",
     "typescript": "^3.6.4"
   }

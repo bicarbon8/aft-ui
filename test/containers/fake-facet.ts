@@ -1,26 +1,27 @@
 import { IFacet } from "../../src/containers/ifacet";
-import { WebElement, By } from "selenium-webdriver";
 import { FacetLocator } from "../../src/containers/facet-locator";
 import { Wait } from "aft-core";
 import { IFacetProvider } from "../../src/containers/ifacet-provider";
 import { FacetLocatorType } from "../../src/containers/facet-locator-type";
+import { FakeWebElement } from "./fake-web-element";
+import { FakeLocator } from "./fake-locator";
 
 export class FakeFacet implements IFacet {
-    root: WebElement;
+    root: FakeWebElement;
 
-    constructor(element: WebElement) {
+    constructor(element: FakeWebElement) {
         this.root = element;
     }
     
     async find(locator: FacetLocator, searchDuration?: number): Promise<IFacet[]> {
         let facets: IFacet[] = [];
-        let loc: By = this.getByForFacetLocator(locator);
+        let loc: FakeLocator = this.getFakeLocatorForFacetLocator(locator);
         if (!searchDuration) {
-            searchDuration = 1000; // TODO: set from configuration
+            searchDuration = 1000;
         }
         
         await Wait.forCondition(async (): Promise<boolean> => {
-            let elements: WebElement[] = await this.root.findElements(loc);
+            let elements: FakeWebElement[] = await this.root.findElements(loc);
             facets = await IFacetProvider.process(...elements);
             return elements.length > 0 && facets.length == elements.length;
         }, searchDuration);
@@ -28,14 +29,10 @@ export class FakeFacet implements IFacet {
         return facets;
     }
 
-    private getByForFacetLocator(locator: FacetLocator): By {
+    private getFakeLocatorForFacetLocator(locator: FacetLocator): FakeLocator {
         switch(locator.locatorType) {
             case FacetLocatorType.css:
-                return By.css(locator.locatorValue);
-            case FacetLocatorType.id:
-                return By.id(locator.locatorValue);
-            case FacetLocatorType.xpath:
-                return By.xpath(locator.locatorValue);
+                return FakeLocator.css(locator.locatorValue);
             default:
                 throw new Error(`unknown type of '${locator.locatorType}' provided`);
         }
@@ -53,7 +50,10 @@ export class FakeFacet implements IFacet {
         await this.root.click();
     }
 
-    async text(): Promise<string> {
+    async text(input?: string): Promise<string> {
+        if (input) {
+            this.root.sendKeys(input);
+        }
         return await this.root.getText();
     }
 

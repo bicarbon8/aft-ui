@@ -1,11 +1,11 @@
 import { IFacetProvider } from "../../src/containers/ifacet-provider";
-import { WebElement } from "selenium-webdriver";
 import { IFacet } from "../../src/containers/ifacet";
 import { FakeFacet } from "./fake-facet";
+import { FakeWebElement } from "./fake-web-element";
 
 @IFacetProvider.register
 export class FakeFacetProvider implements IFacetProvider {
-    name: string = 'fakefacetprovider';
+    name: string = FakeFacet.name;
     
     async supports(element: any): Promise<boolean> {
         if (this.isWebElement(element)) {
@@ -22,6 +22,6 @@ export class FakeFacetProvider implements IFacetProvider {
     }
 
     private isWebElement(element: any): boolean {
-        return element instanceof WebElement || (element['isDisplayed'] && element['isEnabled'] && element['findElements'] && element['click']);
+        return element instanceof FakeWebElement;
     }
 }

@@ -1,25 +1,13 @@
 import { IFacetProvider } from "../../src/containers/ifacet-provider";
 import { IFacet } from "../../src/containers/ifacet";
-import { WebElement, By } from "selenium-webdriver";
 import './fake-facet-provider';
 import { FacetLocator } from "../../src/containers/facet-locator";
+import { FakeWebElement } from "./fake-web-element";
+import { FakeLocator } from "./fake-locator";
 
 describe('IFacetProvider', () => {
     it('can convert element using provider supporting supplied type', async () => {
-        let element: WebElement = jasmine.createSpyObj('WebElement', {
-            'findElements': new Promise<WebElement[]>((resolve, reject) => {
-                resolve([]);
-            }), 
-            'isDisplayed': new Promise((resolve, reject) => {
-                resolve(true);
-            }), 
-            'isEnabled': new Promise((resolve, reject) => {
-                resolve(true);
-            }), 
-            'click': new Promise((resolve, reject) => {
-                resolve();
-            })
-        });
+        let element: FakeWebElement = new FakeWebElement();
 
         let facets: IFacet[] = await IFacetProvider.process(element);
 
@@ -28,34 +16,15 @@ describe('IFacetProvider', () => {
     });
 
     it('can call methods on IFacet.root indirectly', async () => {
-        let found: WebElement = jasmine.createSpyObj('WebElement', {
-            'findElements': new Promise<WebElement[]>((resolve, reject) => {
-                resolve([]);
-            }), 
-            'isDisplayed': new Promise((resolve, reject) => {
-                resolve(true);
-            }), 
-            'isEnabled': new Promise((resolve, reject) => {
-                resolve(true);
-            }), 
-            'click': new Promise((resolve, reject) => {
-                resolve();
-            })
-        });
-        let element: WebElement = jasmine.createSpyObj('WebElement', {
-            'findElements': new Promise<WebElement[]>((resolve, reject) => {
-                resolve([found]);
-            }), 
-            'isDisplayed': new Promise((resolve, reject) => {
-                resolve(true);
-            }), 
-            'isEnabled': new Promise((resolve, reject) => {
-                resolve(false);
-            }), 
-            'click': new Promise((resolve, reject) => {
-                resolve();
-            })
-        });
+        let found: FakeWebElement = new FakeWebElement();
+        found.locator = FakeLocator.css('div.fake');
+        let element: FakeWebElement = new FakeWebElement();
+        element.elements.push(found);
+        element.displayed = true;
+        spyOn(element, 'findElements').and.callThrough();
+        spyOn(element, 'isDisplayed').and.callThrough();
+        spyOn(element, 'isEnabled').and.callThrough();
+        spyOn(element, 'click').and.callThrough();
 
         let facets: IFacet[] = await IFacetProvider.process(element);
         let facet: IFacet = facets[0];
