@@ -4,11 +4,10 @@ import { ISession } from '../sessions/isession';
 import { IFacet } from './ifacet';
 import { FacetLocator } from './facet-locator';
 
-export abstract class Widget {
-    session: ISession;
+export abstract class AbstractWidget {
+    parent: IFacet | ISession;
     index: number;
     maxWaitMs: number;
-    cacheRootElement: boolean;
     
     abstract locator: FacetLocator;
     abstract async isDoneLoading(): Promise<boolean>;
@@ -19,19 +18,18 @@ export abstract class Widget {
         if (!options) {
             options = new ContainerOptions();
         }
-        this.session = options.session;
+        this.parent = options.parent;
         this.index = options.index;
         this.maxWaitMs = options.maxWaitMs;
-        this.cacheRootElement = options.cacheRootElement;
     }
 
     async getRoot(): Promise<IFacet> {
-        if (this.cacheRootElement && this.cachedRoot) {
-            return Promise.resolve(this.cachedRoot);
+        if (this.cachedRoot) {
+            return this.cachedRoot;
         }
 
         await Wait.forCondition(async () => {
-            let possibleRoots: IFacet[] = await this.session.find(this.locator);
+            let possibleRoots: IFacet[] = await this.parent.find(this.locator);
             if (possibleRoots.length > this.index) {
                 let el: IFacet = possibleRoots[this.index];
                 if (el) {
@@ -44,12 +42,12 @@ export abstract class Widget {
             return false;
         }, this.maxWaitMs);
 
-        return Promise.resolve(this.cachedRoot);
+        return this.cachedRoot;
     }
 
-    async getWidget<T extends Widget>(c: new (options: ContainerOptions) => T, options?: ContainerOptions): Promise<T> {
+    async getWidget<T extends AbstractWidget>(c: new (options: ContainerOptions) => T, options?: ContainerOptions): Promise<T> {
         if (!options) {
-            options = new ContainerOptions(this.session);
+            options = new ContainerOptions(this.parent);
         }
         let widget: T = new c(options);
         await widget.waitUntilDoneLoading();
@@ -68,7 +66,10 @@ export abstract class Widget {
 
     async findFirst(locator: FacetLocator): Promise<IFacet> {
         let facets: IFacet[] = await this.find(locator);
-        return facets[0];
+        if (facets.length > 0) {
+            return facets[0];
+        }
+        throw new Error(`unable to find IFacet using FacetLocator ${locator}`);
     }
 
     async waitUntilDoneLoading(msDuration?: number): Promise<void> {

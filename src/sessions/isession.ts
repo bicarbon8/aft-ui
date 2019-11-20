@@ -1,7 +1,7 @@
 import { SessionOptions } from "./session-options";
 import { IDisposable } from "aft-core";
-import { FacetLocator } from "../containers/facet-locator";
 import { IFacet } from "../containers/ifacet";
+import { FacetLocator } from "../containers/facet-locator";
 
 export interface ISession extends IDisposable {
     initialise(options: SessionOptions): Promise<void>;
