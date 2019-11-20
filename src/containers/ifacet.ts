@@ -1,8 +1,10 @@
 import { FacetLocator } from "./facet-locator";
+import { Func } from "aft-core";
 
 export interface IFacet {
-    root: any;
-    find(locator: FacetLocator, searchDuration?: number): Promise<IFacet[]>;
+    deferredRoot: Func<void, any>
+    cachedRoot: any;
+    find(locator: FacetLocator): Promise<IFacet[]>;
     enabled(): Promise<boolean>;
     displayed(): Promise<boolean>;
     click(): Promise<void>;

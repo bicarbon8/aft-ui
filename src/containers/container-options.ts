@@ -1,13 +1,14 @@
 import { IInitialiseOptions } from 'aft-core';
 import { ISession } from '../sessions/isession';
+import { IFacet } from './ifacet';
 
 export class ContainerOptions implements IInitialiseOptions {
-    session: ISession;
+    parent: IFacet | ISession;
     index: number = 0;
     maxWaitMs: number = 10000;
     cacheRootElement: boolean = false;
     
-    constructor(session?: ISession) {
-        this.session = session;
+    constructor(parent?: IFacet | ISession) {
+        this.parent = parent;
     }
 }

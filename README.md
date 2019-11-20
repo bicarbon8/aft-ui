@@ -83,15 +83,12 @@ export class HerokuContentWidget extends Widget {
 ```typescript
 export class HerokuMessagesWidget extends Widget {
     locator: FacetLocator = FacetLocator.id("flash-messages");
-
     private async message(): Promise<WebElement> {
         return this.findFirst(FacetLocator.id("flash"));
     }
-    
     async isDoneLoading(): Promise<boolean> {
         return this.hasMessage();
     }
-
     async hasMessage(): Promise<boolean> {
         try {
             let el: IFacet = await this.message();
@@ -100,7 +97,6 @@ export class HerokuMessagesWidget extends Widget {
             return false;
         }
     }
-
     async getMessage(): Promise<string> {
         let exists: boolean = await this.hasMessage();
         if (exists) {
@@ -147,6 +143,7 @@ the above `BrowserStackSessionGenerator` returns a `BrowserStackSession` referen
 
 ```typescript
 export class BrowserStackSession implements ISession, IDisposable {
+    driver: WebDriver;
     async initialise(options: SessionOptions): Promise<void> {
         if (options.driver) {
             this.driver = options.driver as selenium.WebDriver;
@@ -186,7 +183,17 @@ export class BrowserStackSession implements ISession, IDisposable {
         try {
             let loc: selenium.By = this.getByForFacetLocator(locator);
             let elements: selenium.WebElement[] = await this.driver.findElements(loc);
-            return await IFacetProvider.process(...elements);
+            let facets: IFacet[] = [];
+            for (var i=0; i<elements.length; i++) {
+                let el: selenium.WebElement = elements[i];
+                let index: number = i;
+                let f: SeleniumFacet = new SeleniumFacet(async (): Promise<selenium.WebElement> => {
+                    return await this.driver.findElements(loc)[index];
+                });
+                f.cachedRoot = el;
+                facets.push(f);
+            }
+            return facets;
         } catch (e) {
             return Promise.reject(e);
         }
@@ -201,72 +208,67 @@ export class BrowserStackSession implements ISession, IDisposable {
 }
 ```
 
-### Step 3: create an `IFacetProvider` Plugin
-now that you have a way of starting and stopping Browser Sessions, you need an adapter to work with the elements on the page. This is provided by the `IFacetProvider` which must also be implemented and which must return an implementation of the `IFacet` interface.
-
-```typescript
-@IFacetProvider.register
-export class SeleniumFacetProvider implements IFacetProvider {
-    name: string = 'selenium-facet';
-    async supports(element: any): Promise<boolean> {
-        if (this.isWebElement(element)) {
-            return true;
-        }
-        return false;
-    }
-    async provide(element: any): Promise<IFacet> {
-        if (this.isWebElement(element)) {
-            return new SeleniumFacet(element);
-        }
-        return Promise.reject('unsupported element type supplied to function');
-    }
-    private isWebElement(element: any): boolean {
-        return element instanceof WebElement);
-    }
-}
-```
-
-### Step 4: create an `IFacet` implementation
+### Step 3: create an `IFacet` implementation
 the last step is to provide the `IFacet` implementation adapter for interacting with the elements on the page. This will look like the below:
 
 ```typescript
 export class SeleniumFacet implements IFacet {
-    root: WebElement;
-    constructor(element: WebElement) {
-        this.root = element;
+    deferredRoot: Func<void, Promise<selenium.WebElement>>;
+    cachedRoot: selenium.WebElement;
+    constructor(deferredRoot: Func<void, Promise<selenium.WebElement>>) {
+        this.deferredRoot = deferredRoot;
     }
-    async find(locator: FacetLocator, searchDuration?: number): Promise<IFacet[]> {
-        let facets: IFacet[] = [];
-        let loc: By = this.getByForFacetLocator(locator);
-        if (!searchDuration) {
-            searchDuration = 1000;
+    async find(locator: FacetLocator): Promise<IFacet[]> {
+        try {
+            let loc: selenium.By = this.getByForFacetLocator(locator);
+            let elements: selenium.WebElement[] = await this.getRootElement().then((r) => r.findElements(loc));
+            let facets: IFacet[] = [];
+            for (var i=0; i<elements.length; i++) {
+                let el: selenium.WebElement = elements[i];
+                let index: number = i;
+                let f: SeleniumFacet = new SeleniumFacet(async (): Promise<selenium.WebElement> => {
+                    return await this.getRootElement().then((r) => r.findElements(loc)[index]);
+                });
+                f.cachedRoot = el;
+                facets.push(f);
+            }
+            return facets;
+        } catch (e) {
+            return Promise.reject(e);
         }
-        // get all elements matching locator under this root and return as IFacet[]
-        await Wait.forCondition(async (): Promise<boolean> => {
-            let elements: WebElement[] = await this.root.findElements(loc);
-            facets = await IFacetProvider.process(...elements);
-            return elements.length > 0 && facets.length == elements.length;
-        }, searchDuration);
-        return facets;
     }
     async enabled(): Promise<boolean> {
-        return await this.root.isEnabled();
+        return await this.getRootElement().then((r) => r.isEnabled());
     }
     async displayed(): Promise<boolean> {
-        return await this.root.isDisplayed();
+        return await this.getRootElement().then((r) => r.isDisplayed());
     }
     async click(): Promise<void> {
-        await this.root.click();
+        await this.getRootElement().then((r) => r.click());
     }
     async text(input?: string): Promise<string> {
         if (input) {
-            this.root.sendKeys(input);
-            return this.root.getAttribute('value');
+            this.getRootElement().then((r) => r.sendKeys(input));
+            return this.getRootElement().then((r) => r.getAttribute('value'));
         }
-        return await this.root.getText();
+        return await this.getRootElement().then((r) => r.getText());
     }
     async attribute(key: string): Promise<string> {
-        return await this.root.getAttribute(key);
+        return await this.getRootElement().then((r) => r.getAttribute(key));
+    }
+    private async getRootElement(): Promise<selenium.WebElement> {
+        if (!this.cachedRoot) {
+            this.cachedRoot = await Promise.resolve(this.deferredRoot());
+        } else {
+            try {
+                // ensure cachedRoot is not stale
+                await this.cachedRoot.isDisplayed();
+            } catch (e) {
+                this.cachedRoot = null;
+                return await this.getRootElement();
+            }
+        }
+        return this.cachedRoot;
     }
 }
 ```

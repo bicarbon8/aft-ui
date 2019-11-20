@@ -1,11 +1,15 @@
 import { FacetLocatorType } from "./facet-locator-type";
 
 export class FacetLocator {
-    locatorType: FacetLocatorType;
-    locatorValue: string;
+    type: FacetLocatorType;
+    value: string;
     constructor(locType: FacetLocatorType, locVal: string) {
-        this.locatorType = locType;
-        this.locatorValue = locVal;
+        this.type = locType;
+        this.value = locVal;
+    }
+
+    toString() {
+        return `type: '${FacetLocatorType[this.type]}', value: '${this.value}'`;
     }
 }
 
