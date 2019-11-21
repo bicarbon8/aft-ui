@@ -35,6 +35,14 @@ export class FakeSession implements ISession {
         this.location = location;
     }
 
+    async refresh(): Promise<void> {
+        await this.getDriver().then((d) => d.refresh());
+    }
+
+    async resize(width: number, height: number): Promise<void> {
+        await this.getDriver().then((d) => d.resize(width, height));
+    }
+
     async dispose(err?: Error): Promise<void> {
         this.disposeCount++;
         if (err) {

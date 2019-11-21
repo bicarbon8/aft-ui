@@ -7,4 +7,6 @@ export interface ISession extends IDisposable {
     initialise(options: SessionOptions): Promise<void>;
     find(locator: FacetLocator): Promise<IFacet[]>;
     goTo(location: any): Promise<any>;
+    refresh(): Promise<void>;
+    resize(width: number, height: number): Promise<void>;
 }

@@ -14,4 +14,12 @@ export class FakeDriver {
         }
         return elements;
     }
+
+    async refresh(): Promise<void> {
+        return Promise.resolve();
+    }
+
+    async resize(width: number, height: number): Promise<void> {
+        return Promise.resolve();
+    }
 }

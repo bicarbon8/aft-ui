@@ -1,7 +1,7 @@
 import { ISession } from "./isession";
 import { SessionOptions } from "./session-options";
 import { UiConfig } from "../configuration/ui-config";
-import { Constructor } from "aft-core";
+import { Constructor, TestLog, TestLogOptions } from "aft-core";
 
 export interface ISessionGenerator {
     /**
@@ -14,6 +14,7 @@ export interface ISessionGenerator {
 
 export namespace ISessionGenerator {
     const generators: ISessionGenerator[] = [];
+    var logger: TestLog = new TestLog(new TestLogOptions('ISessionGenerator'));
 
     /**
      * instantiates a new Session using the 'session_provider' specified in 
@@ -28,11 +29,15 @@ export namespace ISessionGenerator {
             options.provider = await UiConfig.provider();
         }
         for (var i=0; i<generators.length; i++) {
-            if (generators[i] && generators[i].provides == options.provider) {
-                return await generators[i].generate(options);
+            try {
+                if (generators[i] && generators[i].provides.toLocaleLowerCase() == options.provider.toLocaleLowerCase()) {
+                    return await generators[i].generate(options);
+                }
+            } catch (e) {
+                logger.trace('error in attempting to generate ISession due to: ' + e);
             }
-            return Promise.reject(`no ISessionGenerator named '${options.provider}' could be found`);
         }
+        return Promise.reject(`no ISessionGenerator named '${options.provider}' could be found`);
     }
     
     export function register<T extends Constructor<ISessionGenerator>>(ctor: T) {
