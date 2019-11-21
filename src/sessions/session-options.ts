@@ -7,6 +7,8 @@ export class SessionOptions {
     platform: TestPlatform;
     logger: TestLog;
     provider: string;
+    useVpn: boolean;
+    additionalCapabilities: {};
 
     constructor(driver?: any) {
         this.driver = driver;
