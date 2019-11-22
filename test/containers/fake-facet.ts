@@ -1,10 +1,10 @@
 import { IFacet } from "../../src/containers/ifacet";
 import { FacetLocator } from "../../src/containers/facet-locator";
-import { Wait, Func } from "aft-core";
 import { FacetLocatorType } from "../../src/containers/facet-locator-type";
 import { FakeWebElement } from "./fake-web-element";
 import { FakeLocator } from "./fake-locator";
 import { FakeLocatorConverter } from "./fake-locator-converter";
+import { Func } from "aft-core";
 
 export class FakeFacet implements IFacet {
     deferredRoot: Func<void, Promise<FakeWebElement>>;
@@ -21,13 +21,16 @@ export class FakeFacet implements IFacet {
         
         let elements: FakeWebElement[] = await this.getRootElement().then((root) => root.findElements(loc));
         for (var i=0; i<elements.length; i++) {
-            let el: FakeWebElement = elements[i];
             let index: number = i;
-            let f: FakeFacet = new FakeFacet(async (): Promise<FakeWebElement> => {
-                return await this.getRootElement().then((root) => root.findElements(FakeLocatorConverter.fromFacetLocator(locator)))[index];
-            });
-            f.cachedRoot = el;
-            facets.push(f);
+            let deferred: Func<void, Promise<FakeWebElement>> = async () => {
+                let root: FakeWebElement = await this.getRootElement();
+                let loc: FakeLocator = FakeLocatorConverter.fromFacetLocator(locator);
+                let elements: FakeWebElement[] = await root.findElements(loc);
+                return elements[index];
+            };
+            let facet: FakeFacet = new FakeFacet(deferred);
+            facet.cachedRoot = await Promise.resolve(deferred());
+            facets.push(facet);
         }
 
         return facets;
@@ -43,31 +46,39 @@ export class FakeFacet implements IFacet {
     }
 
     async enabled(): Promise<boolean> {
-        return await this.cachedRoot.isEnabled();
+        return await this.getRootElement().then((r) => r.isEnabled());
     }
 
     async displayed(): Promise<boolean> {
-        return await this.cachedRoot.isDisplayed();
+        return await this.getRootElement().then((r) => r.isDisplayed());
     }
 
     async click(): Promise<void> {
-        await this.cachedRoot.click();
+        await this.getRootElement().then((r) => r.click());
     }
 
     async text(input?: string): Promise<string> {
         if (input) {
-            this.cachedRoot.sendKeys(input);
+            await this.getRootElement().then((r) => r.sendKeys(input));
         }
-        return await this.cachedRoot.getText();
+        return await this.getRootElement().then((r) => r.getText());
     }
 
     async attribute(key: string): Promise<string> {
-        return await this.cachedRoot.getAttribute(key);
+        return await this.getRootElement().then((r) => r.getAttribute(key));
     }
 
     private async getRootElement(): Promise<FakeWebElement> {
         if (!this.cachedRoot) {
             this.cachedRoot = await Promise.resolve(this.deferredRoot());
+        } else {
+            try {
+                // ensure cachedRoot is not stale
+                await this.cachedRoot.isDisplayed();
+            } catch (e) {
+                this.cachedRoot = null;
+                return await this.getRootElement();
+            }
         }
         return this.cachedRoot;
     }

@@ -5,6 +5,8 @@ import { FakeWebElement } from "../containers/fake-web-element";
 import { IFacet, FacetLocator } from "../../src";
 import { FakeLocatorConverter } from "../containers/fake-locator-converter";
 import { FakeFacet } from "../containers/fake-facet";
+import { Func } from "aft-core";
+import { FakeLocator } from "../containers/fake-locator";
 
 export class FakeSession implements ISession {
     options: SessionOptions;
@@ -20,13 +22,16 @@ export class FakeSession implements ISession {
         let facets: IFacet[] = [];
         let elements: FakeWebElement[] = await this.getDriver().then((d) => d.findElements(FakeLocatorConverter.fromFacetLocator(locator)));
         for (var i=0; i<elements.length; i++) {
-            let el: FakeWebElement = elements[i];
             let index: number = i;
-            let f: FakeFacet = new FakeFacet(async (): Promise<FakeWebElement> => {
-                return await this.getDriver().then((d) => d.findElements(FakeLocatorConverter.fromFacetLocator(locator)))[index];
-            });
-            f.cachedRoot = el;
-            facets.push(f);
+            let deferred: Func<void, Promise<FakeWebElement>> = async () => {
+                let driver: FakeDriver = await this.getDriver();
+                let loc: FakeLocator = FakeLocatorConverter.fromFacetLocator(locator);
+                let elements: FakeWebElement[] = await driver.findElements(loc);
+                return elements[index];
+            };
+            let facet: FakeFacet = new FakeFacet(deferred);
+            facet.cachedRoot = await Promise.resolve(deferred());
+            facets.push(facet);
         }
         return facets;
     }

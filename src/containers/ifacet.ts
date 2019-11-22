@@ -2,7 +2,7 @@ import { FacetLocator } from "./facet-locator";
 import { Func } from "aft-core";
 
 export interface IFacet {
-    deferredRoot: Func<void, any>
+    deferredRoot: Func<void, any>;
     cachedRoot: any;
     find(locator: FacetLocator): Promise<IFacet[]>;
     enabled(): Promise<boolean>;
