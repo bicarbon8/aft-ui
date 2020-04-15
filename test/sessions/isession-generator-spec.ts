@@ -1,20 +1,19 @@
-import { ISessionGenerator } from "../../src/sessions/isession-generator";
+import { SessionGenerator } from "../../src/sessions/session-generator";
 import { SessionOptions } from "../../src/sessions/session-options";
 import { UiConfig } from "../../src/configuration/ui-config";
 import { FakeSession } from "./fake-session";
-import './fake-session-generator';
-import { ISession } from "../../src/sessions/isession";
+import { SessionTestHelper } from "./session-test-helper";
 
-describe('ISessionGenerator', () => {
+describe('SessionGenerator', () => {
     beforeEach(() => {
-        TestHelper.reset();
+        SessionTestHelper.reset();
     });
     
     it('can get session by name', async () => {
         let opts: SessionOptions = new SessionOptions();
-        opts.provider = FakeSession.name;
+        opts.provider = './dist/test/sessions/fake-session';
 
-        let tc: FakeSession = await ISessionGenerator.get(opts) as FakeSession;
+        let tc: FakeSession = await SessionGenerator.get(opts) as FakeSession;
 
         expect(tc).not.toBeNull();
         expect(tc).not.toBeUndefined();
@@ -23,10 +22,10 @@ describe('ISessionGenerator', () => {
     });
 
     it('can get session by configuration', async () => {
-        let provider: string = FakeSession.name;
+        let provider: string = './dist/test/sessions/fake-session';
         UiConfig.provider(provider);
 
-        let tc: FakeSession = await ISessionGenerator.get() as FakeSession;
+        let tc: FakeSession = await SessionGenerator.get() as FakeSession;
 
         expect(tc).not.toBeNull();
         expect(tc).not.toBeUndefined();
@@ -39,51 +38,29 @@ describe('ISessionGenerator', () => {
         opts.provider = 'nonexisting';
 
         try {
-            await ISessionGenerator.get(opts);
+            await SessionGenerator.get(opts);
             /* not expected */
             expect(true).toEqual(false);
         } catch (e) {
             /* expected because no matching generator could be found */
             expect(e).not.toBeUndefined();
-            expect(e).toEqual(`no ISessionGenerator named '${opts.provider}' could be found`);
+            expect(e).toEqual(`no ISession implementation named '${opts.provider}' could be found`);
         }
     });
 
-    it('handles exceptions thrown by ISessionGenerator implementations', async () => {
+    it('handles exceptions thrown by ISession implementations', async () => {
         let opts: SessionOptions = new SessionOptions();
-        opts.provider = 'DummySession';
+        opts.provider = './dist/test/sessions/fake-session-throwsoninit';
 
         try {
-            await ISessionGenerator.get(opts);
+            await SessionGenerator.get(opts);
             /* not expected */
             expect(true).toEqual(false);
         } catch (e) {
-            /* expected because matching generator threw exception on call to 'generate' */
+            /* expected because matching ISession threw exception on call to 'initialise' */
             expect(e).not.toBeUndefined();
-            expect(e).toEqual(`no ISessionGenerator named '${opts.provider}' could be found`);
-            expect(TestHelper.options[0]).toEqual(opts);
+            expect(e.toString()).toEqual('Error: Method not implemented.');
+            expect(SessionTestHelper.options[0]).toEqual(opts);
         }
     });
 });
-
-@ISessionGenerator.register
-class FakeSessionGeneratorThrows implements ISessionGenerator {
-    provides: string = 'DummySession';
-    
-    generate(options: SessionOptions): Promise<ISession> {
-        TestHelper.generateCalledWith(options);
-        throw new Error("Method not implemented.");
-    }
-}
-
-module TestHelper {
-    export var options: SessionOptions[] = [];
-
-    export function generateCalledWith(opts: SessionOptions): void {
-        options.push(opts);
-    }
-
-    export function reset(): void {
-        options = [];
-    }
-}

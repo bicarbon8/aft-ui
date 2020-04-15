@@ -110,7 +110,7 @@ export class HerokuMessagesWidget extends Widget {
 ### Step 3: use them to interact with the web application
 
 ```typescript
-let session: ISession = await ISessionGenerator.get(); // creates new Browser session
+let session: ISession = await SessionGenerator.get(); // creates instance of specified ISession Plugin and calls ISession.initialise before returning
 let opts: WidgetOptions = new WidgetOptions(session);
 let loginPage: HerokuLoginPage = new HerokuLoginBasePage(opts);
 await loginPage.navigateTo(); // navigates to Heroku Login
@@ -123,23 +123,8 @@ expect(message).toContain("You logged into a secure area!");
 ## Adding Plugins
 plugins can be added to support frameworks such as Selenium and Cypress. Doing so involves a small amount of work to create the adapter layer, but afterwards should work identially between these different systems.
 
-### Step 1: create an `ISessionGenerator` Plugin
-the `ISession` is the system providing your UI session interface. In Selenium, this is the _WebDriver_. To create a new `ISession` implementation, first create the `ISessionGenerator` implementation which will return a new `ISession` implementation after calling the `ISession.initialise` method. See the below example on how to add support for using BrowserStack sessions:
-
-```typescript
-@ISessionGenerator.register
-export class BrowserStackSessionGenerator implements ISessionGenerator {
-    name: string = 'browserstack-session';
-    async generate(options: SessionOptions): Promise<ISession> {
-        let c: BrowserStackSession = new BrowserStackSession();
-        await c.initialise(options);
-        return c;
-    }
-}
-```
-
-### Step 2: create an `ISession` Implementation
-the above `BrowserStackSessionGenerator` returns a `BrowserStackSession` referencing an active browser session. The code for this looks like:
+### Step 1: create an `ISession` Implementation
+the `ISession` is the system providing your UI session interface. In Selenium, this is the _WebDriver_. To create a new `ISession` implementation, which will be returned by the `SessionGenerator.get` method after calling the `ISession.initialise` method, follow the below example on how to add support for using BrowserStack sessions:
 
 ```typescript
 export class BrowserStackSession implements ISession, IDisposable {
@@ -208,8 +193,8 @@ export class BrowserStackSession implements ISession, IDisposable {
 }
 ```
 
-### Step 3: create an `IFacet` implementation
-the last step is to provide the `IFacet` implementation adapter for interacting with the elements on the page. This will look like the below:
+### Step 2: create an `IFacet` implementation
+the next and final step is to provide the `IFacet` implementation adapter. An `IFacet` implementation is the equivalent of a `WebElement` in Selenium and is used to interact with the elements in the UI. This will look like the below:
 
 ```typescript
 export class SeleniumFacet implements IFacet {

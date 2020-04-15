@@ -11,4 +11,4 @@ export * from './configuration/test-platform';
 /* sessions */
 export * from './sessions/session-options';
 export * from './sessions/isession';
-export * from './sessions/isession-generator';
+export * from './sessions/session-generator';

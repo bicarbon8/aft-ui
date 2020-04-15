@@ -1,6 +1,6 @@
 {
   "name": "aft-ui",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Automation Framework for Testing (AFT) core package supporting UI testing via plugins",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
@@ -21,7 +21,7 @@
   "author": "Jason Holt Smith <bicarbon8@gmail.com>",
   "license": "MIT",
   "dependencies": {
-    "aft-core": "1.0.1",
+    "aft-core": "^2.0.1",
     "es6-promise": "^4.2.8"
   },
   "devDependencies": {
