@@ -19,7 +19,7 @@ export module SessionGenerator {
         let sessions: ISession[] = await PluginLoader.load<ISession>(options.provider || await UiConfig.provider());
         if (sessions && sessions.length > 0) {
             try {
-                sessions[0].initialise(options);
+                await sessions[0].initialise(options);
                 return sessions[0];
             } catch (e) {
                 return Promise.reject(e);
