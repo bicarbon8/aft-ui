@@ -1,7 +1,5 @@
 import { ISession } from "../../src/sessions/isession";
 import { ISessionOptions } from "../../src/sessions/isession-options";
-import { FacetLocator } from "../../src/facets/facet-locator";
-import { IFacet } from "../../src/facets/ifacet";
 import { SessionTestHelper } from "./session-test-helper";
 import { FakeWebElement } from "../facets/fake-web-element";
 import { IFacetOptions, TestPlatform } from "../../src";
