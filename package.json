@@ -1,14 +1,13 @@
 {
   "name": "aft-ui",
-  "version": "2.0.1",
+  "version": "3.0.0-alpha1",
   "description": "Automation Framework for Testing (AFT) core package supporting UI testing via plugins",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "scripts": {
-    "pretest": "tsc --declaration",
-    "posttest": "",
-    "build": "tsc --declaration",
-    "test": "jasmine JASMINE_CONFIG_PATH=./jasmine.json"
+    "clean": "rimraf ./dist",
+    "build": "npm run clean & tsc --declaration",
+    "test": "npm run build & jasmine JASMINE_CONFIG_PATH=./jasmine.json"
   },
   "keywords": [
     "aft",
@@ -28,6 +27,7 @@
     "@types/jasmine": "^3.4.4",
     "@types/node": "^12.7.12",
     "jasmine": "^3.5.0",
+    "rimraf": "^3.0.2",
     "typescript": "^3.6.4"
   }
 }

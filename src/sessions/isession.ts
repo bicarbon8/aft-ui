@@ -1,12 +1,12 @@
-import { SessionOptions } from "./session-options";
-import { IDisposable } from "aft-core";
-import { IFacet } from "../containers/ifacet";
-import { FacetLocator } from "../containers/facet-locator";
+import { ISessionOptions } from "./isession-options";
+import { IDisposable, TestLog } from "aft-core";
+import { TestPlatform } from "../configuration/test-platform";
+import { IElementOptions } from "./ielement-options";
 
-export interface ISession extends IDisposable {
-    initialise(options: SessionOptions): Promise<void>;
-    find(locator: FacetLocator): Promise<IFacet[]>;
-    goTo(location: any): Promise<any>;
-    refresh(): Promise<void>;
-    resize(width: number, height: number): Promise<void>;
+export interface ISession<Td, Te, Tl> extends IDisposable {
+    initialise(options: ISessionOptions): Promise<void>;
+    getDriver(): Promise<Td>;
+    getElements(locator: Tl, options?: IElementOptions): Promise<Te[]>;
+    getPlatform(): Promise<TestPlatform>;
+    getLogger(): Promise<TestLog>;
 }

@@ -1,34 +1,54 @@
-import { FakeWebElement } from "../containers/fake-web-element";
-import { FakeDriver } from "./fake-driver";
 import { FakeSession } from "./fake-session";
-import { SessionOptions } from "../../src/sessions/session-options";
-import { IFacet } from "../../src/containers/ifacet";
-import { FacetLocator } from "../../src/containers/facet-locator";
-import { FakeLocator } from "../containers/fake-locator";
+import { FakeDriver } from "./fake-driver";
+import { ISessionOptions, IElementOptions } from "../../src";
+import { FakeWebElement } from "../facets/fake-web-element";
+import { FakeLocator } from "../facets/fake-locator";
+import { Wait } from "aft-core";
 
 describe('ISession', () => {
-    it('can implement auto-refresh from Driver on cached element exception', async () => {
-        let element: FakeWebElement = new FakeWebElement();
-        element.locator = FakeLocator.css('div.fake');
-        element.displayed = true;
-        element.enabled = true;
-        spyOn(element, "findElements").and.callThrough();
-        let driver: FakeDriver = new FakeDriver();
-        driver.elements.push(element);
-        spyOn(driver, "findElements").and.callThrough();
-        let session: FakeSession = new FakeSession();
-        let sOpts: SessionOptions = new SessionOptions(driver);
-        session.initialise(sOpts);
-        spyOn(session, "find").and.callThrough();
+    it('can return specified type of elements from the contained driver', async () => {
+        let fd: FakeDriver = new FakeDriver();
+        let findElementsSpy = spyOn(fd, 'findElements').and.returnValue(Promise.resolve([new FakeWebElement()]));
+        let fs: FakeSession = new FakeSession();
+        fs.initialise({
+            driver: fd
+        } as ISessionOptions);
+        let getDriverSpy = spyOn(fs, 'getDriver').and.callThrough();
 
-        let facets: IFacet[] = await session.find(FacetLocator.css('div.fake'));
-        let facet: IFacet = facets[0];
+        let actualEls: FakeWebElement[] = await fs.getElements(FakeLocator.css('div.fake'));
 
-        expect(await facet.displayed()).toBe(true);
+        expect(actualEls).not.toBeNull();
+        expect(actualEls).not.toBeUndefined();
+        expect(actualEls.length).toBe(1);
+        expect(getDriverSpy).toHaveBeenCalledTimes(1);
+        expect(findElementsSpy).toHaveBeenCalledTimes(1);
+    });
 
-        spyOn(element, 'isDisplayed').and.throwError('fake stale element error');
+    it('can handle additional options on the call to get elements', async () => {
+        let fd: FakeDriver = new FakeDriver();
+        let findElementsSpy = spyOn(fd, 'findElements').and.callFake(returnElementsAfterThreeTries);
+        let fs: FakeSession = new FakeSession();
+        fs.initialise({
+            driver: fd
+        } as ISessionOptions);
+        let getDriverSpy = spyOn(fs, 'getDriver').and.callThrough();
 
-        expect(await facet.enabled()).toBe(true);
-        expect(driver.findElements).toHaveBeenCalledTimes(3);
+        let actualEls: FakeWebElement[] = await fs.getElements(FakeLocator.css('div.fake'), {maxWaitMs: 10000} as IElementOptions);
+
+        expect(actualEls).not.toBeNull();
+        expect(actualEls).not.toBeUndefined();
+        expect(actualEls.length).toBe(2);
+        expect(getDriverSpy).toHaveBeenCalledTimes(3);
+        expect(findElementsSpy).toHaveBeenCalledTimes(3);
     });
 });
+
+var attempt: number = 0;
+async function returnElementsAfterThreeTries(one: any, two?: any): Promise<FakeWebElement[]> {
+    if (attempt++ >= 2) {
+        attempt = 0;
+        return [new FakeWebElement(), new FakeWebElement()];
+    }
+    await Wait.forDuration(1000);
+    throw new Error(`will throw error until attempts is 3 or more: ${attempt}`);
+}

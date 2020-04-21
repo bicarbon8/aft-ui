@@ -6,17 +6,18 @@ Automation Framework for Testing (AFT) package supporting UI testing using the P
 ## Page Object Model (POM)
 ![aft-ui-pom](aft-ui-pom.png)
 
-the POM is a standard design pattern used in UI and layout testing. AFT-UI supports this model via a `Page` class that is made up of one or more `Widget` classes encapsulating logical blocks of functionality on the page. the `Widget` is then made up of one or more `IFacet` implementations. Take the following as an example of how one could interact with the following page https://the-internet.herokuapp.com/login
+the POM is a standard design pattern used in UI and layout testing. AFT-UI supports this model via a `Page` class that is made up of one or more ~~`Widget`~~ `Container` classes encapsulating logical blocks of functionality on the page. the ~~`Widget`~~ `Container` is then made up of one or more `IFacet` objects. Take the following as an example of how one could interact with the following page https://the-internet.herokuapp.com/login
 
 ### Step 1: create the Page model class
 
 ```typescript
-export class HerokuLoginPage extends Page {
+export class HerokuLoginPage extends AbstractFacetContainer {
+    locator: FacetLocator = FacetLocator.css("html");
     private content(): Promise<HerokuContentWidget> {
         return this.getWidget(HerokuContentWidget);
     }
     private messages(): Promise<HerokuMessagesWidget> {
-        let wo: WidgetOptions = new WidgetOptions(this.session);
+        let wo: ContainerOptions = new ContainerOptions(this.session);
         wo.maxWaitMs = 20000;
         return this.getWidget(HerokuMessagesWidget, wo);
     }
@@ -111,7 +112,7 @@ export class HerokuMessagesWidget extends Widget {
 
 ```typescript
 let session: ISession = await SessionGenerator.get(); // creates instance of specified ISession Plugin and calls ISession.initialise before returning
-let opts: WidgetOptions = new WidgetOptions(session);
+let opts: ContainerOptions = new ContainerOptions(session);
 let loginPage: HerokuLoginPage = new HerokuLoginBasePage(opts);
 await loginPage.navigateTo(); // navigates to Heroku Login
 await loginPage.login("tomsmith", "SuperSecretPassword!");
@@ -129,7 +130,7 @@ the `ISession` is the system providing your UI session interface. In Selenium, t
 ```typescript
 export class BrowserStackSession implements ISession, IDisposable {
     driver: WebDriver;
-    async initialise(options: SessionOptions): Promise<void> {
+    async initialise(options: ISessionOptions): Promise<void> {
         if (options.driver) {
             this.driver = options.driver as selenium.WebDriver;
         } else {
@@ -138,7 +139,7 @@ export class BrowserStackSession implements ISession, IDisposable {
             caps.set('browser_version', options.platform.browserVersion);
             caps.set('os', options.platform.os);
             caps.set('os_version', options.platform.osVersion);
-            caps.set('resolution', options.resolution);
+            caps.set('resolution', '1024x768');
             caps.set('browserstack.user', '[get_from_configuration]');
             caps.set('browserstack.key', '[get_from_configuration]'); 
             let driver: selenium.WebDriver;

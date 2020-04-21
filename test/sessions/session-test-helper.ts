@@ -1,9 +1,9 @@
-import { SessionOptions } from "../../src/sessions/session-options";
+import { ISessionOptions } from "../../src/sessions/isession-options";
 
 export module SessionTestHelper {
-    export var options: SessionOptions[] = [];
+    export var options: ISessionOptions[] = [];
 
-    export function generateCalledWith(opts: SessionOptions): void {
+    export function generateCalledWith(opts: ISessionOptions): void {
         options.push(opts);
     }
 

@@ -1,5 +1,5 @@
 import { ISession } from "./isession";
-import { SessionOptions } from "./session-options";
+import { ISessionOptions } from "./isession-options";
 import { UiConfig } from "../configuration/ui-config";
 import { PluginLoader } from "aft-core";
 
@@ -10,13 +10,13 @@ export module SessionGenerator {
      * @param options optional set of configuration used when generating the session.
      * if not specified, the values from UiConfig will be used instead
      */
-    export async function get(options?: SessionOptions): Promise<ISession> {
+    export async function get(options?: ISessionOptions): Promise<ISession<any, any, any>> {
         if (!options) {
-            options = new SessionOptions();
-            options.platform = await UiConfig.platform();
-            options.provider = await UiConfig.provider();
+            options = {} as ISessionOptions;
         }
-        let sessions: ISession[] = await PluginLoader.load<ISession>(options.provider || await UiConfig.provider());
+        options.platform = options.platform || await UiConfig.platform();
+        options.provider = options.provider || await UiConfig.provider();
+        let sessions: ISession<any, any, any>[] = await PluginLoader.load<ISession<any, any, any>>(options.provider);
         if (sessions && sessions.length > 0) {
             try {
                 await sessions[0].initialise(options);

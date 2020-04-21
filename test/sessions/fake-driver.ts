@@ -1,5 +1,5 @@
-import { FakeWebElement } from "../containers/fake-web-element";
-import { FakeLocator } from "../containers/fake-locator";
+import { FakeWebElement } from "../facets/fake-web-element";
+import { FakeLocator } from "../facets/fake-locator";
 
 export class FakeDriver {
     elements: FakeWebElement[] = [];
