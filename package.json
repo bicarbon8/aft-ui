@@ -6,8 +6,8 @@
   "types": "./dist/src/index.d.ts",
   "scripts": {
     "clean": "rimraf ./dist",
-    "build": "npm run clean & tsc --declaration",
-    "test": "npm run build & jasmine JASMINE_CONFIG_PATH=./jasmine.json"
+    "build": "npm run clean && tsc --declaration",
+    "test": "npm run build && jasmine JASMINE_CONFIG_PATH=./jasmine.json"
   },
   "keywords": [
     "aft",
