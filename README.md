@@ -161,3 +161,7 @@ export class SeleniumFacet extends AbstractFacet<WebDriver, WebElement, Locator>
     }
 }
 ```
+## aftconfig.json keys and values supported by aft-ui package
+- **sessiongeneratorpluginmanager** - allows for specifying which `AbstractSessionGeneratorPlugin` implementations should be loaded and optionally what `TestPlatform` should be used
+  - **pluginNames** - a `string[]` of names for `AbstractSessionGeneratorPlugin` implementations to load. only one can be used at any given time, but multiple can be listed with the top-most being used unless specifically not enabled
+  - **platform** - an optional `TestPlatform` object listing the _OS_, _OS version_, _Browser_, _Browser version_, and _Device name_ to use when creating new sessions. if not specified here, this value must be specified in the configuration section for the loaded `AbstractSessionGeneratorPlugin`
