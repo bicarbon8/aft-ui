@@ -1,43 +1,27 @@
-import { Wait } from 'aft-core';
-import { IFacet } from './ifacet';
-import { UiConfig } from '../configuration/ui-config';
-import { IFacetOptions } from './ifacet-options';
-import { ISession } from '../sessions/isession';
+import { LoggingPluginManager, rand } from '../../../aft-core/src';
+import { IFacet, IFacetOptions } from './ifacet';
 import { IElementOptions } from '../sessions/ielement-options';
+import { ISession } from '../sessions/isession';
 
 export abstract class AbstractFacet<Td, Te, Tl> implements IFacet<Td, Te, Tl> {
-    abstract isDoneLoading(): Promise<boolean>;
-    abstract getElements(locator: Tl, options?: IElementOptions): Promise<Te[]>;
-
-    protected options: IFacetOptions;
-
-    async initialise(options: IFacetOptions): Promise<void> {
-        this.options = options;
+    readonly session: ISession<Td, Te, Tl>;
+    readonly logMgr: LoggingPluginManager;
+    readonly maxWaitMs: number;
+    readonly index: number;
+    readonly parent: IFacet<Td, Te, Tl>;
+    readonly locator: Tl;
+    
+    constructor(options: IFacetOptions<Td, Te, Tl>) {
+        this.locator = this.locator || options.locator;
+        this.session = options.session;
+        this.logMgr = options.logMgr || new LoggingPluginManager({ logName: `${this.constructor.name}_${rand.guid}` });
+        this.parent = options.parent;
+        this.maxWaitMs = (options.maxWaitMs === undefined) ? 10000 : options.maxWaitMs;
+        this.index = (options.index === undefined) ? 0 : options.index;
     }
 
-    async getParent(): Promise<ISession<Td, Te, Tl> | IFacet<Td, Te, Tl>> {
-        return await Promise.resolve(this.options.parent);
-    }
-
-    async getRoot(): Promise<Te> {
-        return await Promise.resolve(this.options.root) as unknown as Te;
-    }
-
-    async getIndex(): Promise<number> {
-        return this.options.index || 0;
-    }
-
-    async getMaxWaitMs(): Promise<number> {
-        return this.options.maxWaitMs || await UiConfig.loadWaitDuration();
-    }
-
-    async waitUntilDoneLoading(msDuration?: number): Promise<void> {
-        if (!msDuration) {
-            msDuration = await UiConfig.loadWaitDuration();
-        }
-        await Wait.forCondition(async () => {
-            let done: boolean = await this.isDoneLoading();
-            return done;
-        }, msDuration);
-    }
+    abstract getElements(options?: IElementOptions<Tl>): Promise<Te[]>;
+    abstract getElement(options?: IElementOptions<Tl>): Promise<Te>;
+    abstract getFacet<T extends IFacet<Td, Te, Tl>>(facetType: new () => T, options?: IFacetOptions<Td, Te, Tl>): Promise<T>;
+    abstract getRoot(): Promise<Te>;
 }

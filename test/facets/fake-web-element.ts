@@ -36,6 +36,20 @@ export class FakeWebElement {
         return elements;
     }
 
+    async findElement(locator: FakeLocator): Promise<FakeWebElement> {
+        let elements: FakeWebElement[] = [];
+        for (var i=0; i<this.elements.length; i++) {
+            let element: FakeWebElement = this.elements[i];
+            if (locator.using == element.locator.using && locator.value == element.locator.value) {
+                elements.push(element);
+            }
+        }
+        if (elements.length > 0) {
+            return elements[0];
+        }
+        return null;
+    }
+
     async click(): Promise<void> {
         this.clicks++;
     }

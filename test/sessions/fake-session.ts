@@ -1,58 +1,55 @@
-import { ISession } from "../../src/sessions/isession";
-import { ISessionOptions } from "../../src/sessions/isession-options";
 import { FakeDriver } from "./fake-driver";
-import { TestLog, TestLogOptions, Wait } from "aft-core";
+import { LoggingPluginManager } from "../../../aft-core/src";
 import { FakeWebElement } from "../facets/fake-web-element";
 import { FakeLocator } from "../facets/fake-locator";
-import { TestPlatform } from "../../src/configuration/test-platform";
-import { UiConfig } from "../../src/configuration/ui-config";
 import { IFacet } from "../../src/facets/ifacet";
-import { IElementOptions } from "../../src/sessions/ielement-options";
+import { IFacetOptions, ISession, ISessionOptions } from "../../src";
+
+export interface FakeSessionOptions extends ISessionOptions<FakeDriver> {
+
+}
 
 export class FakeSession implements ISession<FakeDriver, FakeWebElement, FakeLocator> {
-    location: string;
-    disposeCount: number = 0;
-    disposeErrors: Error[] = [];
+    disposeCount: number;
+    disposeErrors: Error[];
+    goToStrings: string[];
+    refreshCount: number;
+    resizeValues: object[];
 
-    private options: ISessionOptions;
-    private driver: FakeDriver;
-    private platform: TestPlatform;
-    private logger: TestLog;
+    readonly driver: FakeDriver;
+    readonly logMgr: LoggingPluginManager;
     
-    async initialise(options: ISessionOptions): Promise<void> {
-        this.options = options;
+    constructor(options: FakeSessionOptions) {
+        this.driver = options.driver;
+        this.logMgr = options.logMgr;
+        this.disposeCount = 0;
+        this.disposeErrors = [];
+        this.goToStrings = [];
+        this.refreshCount = 0;
+        this.resizeValues = [];
     }
 
-    async getDriver(): Promise<FakeDriver> {
-        if (!this.driver) {
-            this.driver = this.options.driver || new FakeDriver();
+    async getFacet<T extends IFacet<FakeDriver, FakeWebElement, FakeLocator>>(facetType: new (options: IFacetOptions<FakeDriver, FakeWebElement, FakeLocator>) => T, options?: IFacetOptions<FakeDriver, FakeWebElement, FakeLocator>): Promise<T> {
+        if (!options) {
+            options = {};
         }
-        return this.driver;
-    }
-
-    async getElements(locator: FakeLocator, options?: IElementOptions): Promise<FakeWebElement[]> {
-        let elements: FakeWebElement[];
-        let duration: number = options?.maxWaitMs || await UiConfig.loadWaitDuration();
-        await Wait.forCondition(async () => {
-            elements = await this.getDriver()
-                .then(async (d) => {return await d.findElements(locator);});
-            return true;
-        }, duration);
-        return elements;
-    }
-
-    async getPlatform(): Promise<TestPlatform> {
-        if (!this.platform) {
-            this.platform = this.options.platform || await UiConfig.platform();
+        if (!options.session) {
+            options.session = this;
         }
-        return this.platform;
+        let facet: T = new facetType(options);
+        return facet;
     }
 
-    async getLogger(): Promise<TestLog> {
-        if (!this.logger) {
-            this.logger = this.options.logger || new TestLog(new TestLogOptions(FakeSession.name));
-        }
-        return this.logger;
+    async goTo(url: string): Promise<void> {
+        this.goToStrings.push(url);
+    }
+
+    async refresh(): Promise<void> {
+        this.refreshCount++;
+    }
+
+    async resize(width: number, height: number): Promise<void> {
+        this.resizeValues.push({w: width, h: height});
     }
 
     async dispose(err?: Error): Promise<void> {

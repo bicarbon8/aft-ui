@@ -1,16 +1,18 @@
-export class TestPlatform {
-    os: string;
-    osVersion: string;
-    browser: string;
-    browserVersion: string;
-    deviceName: string;
+export interface TestPlatform {
+    os?: string;
+    osVersion?: string;
+    browser?: string;
+    browserVersion?: string;
+    deviceName?: string;
+}
 
-    constructor(os?: string, osVersion?: string, browser?: string, browserVersion?: string, deviceName?: string) {
-        this.os = os;
-        this.osVersion = osVersion;
-        this.browser = browser;
-        this.browserVersion = browserVersion;
-        this.deviceName = deviceName;
+export class TestPlatform {
+    constructor(options?: TestPlatform) {
+        this.os = options?.os;
+        this.osVersion = options?.osVersion;
+        this.browser = options?.browser;
+        this.browserVersion = options?.browserVersion;
+        this.deviceName = options?.deviceName;
     }
 
     toString(): string {

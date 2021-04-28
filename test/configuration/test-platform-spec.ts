@@ -14,7 +14,7 @@ describe('TestPlatform', () => {
     });
 
     it('can generate a valid platform string', async () => {
-        let platform: TestPlatform = new TestPlatform('mac', 'osx', 'firefox', '34', 'Samsung Galaxy S3');
+        let platform: TestPlatform = new TestPlatform({os:'mac', osVersion:'osx', browser:'firefox', browserVersion:'34', deviceName:'Samsung Galaxy S3'});
         let platformString: string = platform.toString();
 
         expect(platformString).toEqual('mac_osx_firefox_34_Samsung Galaxy S3');

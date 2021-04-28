@@ -1,12 +1,23 @@
-import { ISessionOptions } from "./isession-options";
-import { IDisposable, TestLog } from "aft-core";
-import { TestPlatform } from "../configuration/test-platform";
-import { IElementOptions } from "./ielement-options";
+import { IDisposable, LoggingPluginManager } from "../../../aft-core/src";
+import { IFacet, IFacetOptions } from "../facets/ifacet";
+
+export interface ISessionOptions<Td> {
+    /**
+     * required to instantiate a valid {ISession<any, any, any>}
+     */
+    driver?: Td;
+    /**
+     * required to keep continuity between {ISession<any, any, any>} 
+     * and {IFacet<any, any, any>} logging
+     */
+    logMgr?: LoggingPluginManager;
+}
 
 export interface ISession<Td, Te, Tl> extends IDisposable {
-    initialise(options: ISessionOptions): Promise<void>;
-    getDriver(): Promise<Td>;
-    getElements(locator: Tl, options?: IElementOptions): Promise<Te[]>;
-    getPlatform(): Promise<TestPlatform>;
-    getLogger(): Promise<TestLog>;
+    readonly driver: Td;
+    readonly logMgr: LoggingPluginManager;
+    getFacet<T extends IFacet<Td, Te, Tl>>(facetType: new (options: IFacetOptions<Td, Te, Tl>) => T, options?: IFacetOptions<Td, Te, Tl>): Promise<T>;
+    goTo(url: string): Promise<void>;
+    refresh(): Promise<void>;
+    resize(width: number, height: number): Promise<void>;
 }

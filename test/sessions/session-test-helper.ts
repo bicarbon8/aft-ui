@@ -1,13 +1,29 @@
-import { ISessionOptions } from "../../src/sessions/isession-options";
+import { ISessionOptions, ISessionGeneratorPluginOptions } from "../../src";
 
-export module SessionTestHelper {
-    export var options: ISessionOptions[] = [];
+export class SessionTestHelper {
+    private _options: ISessionGeneratorPluginOptions[];
+    private _opts: ISessionOptions<any>[];
 
-    export function generateCalledWith(opts: ISessionOptions): void {
-        options.push(opts);
+    constructor() {
+        this._options = [];
+        this._opts = [];
     }
 
-    export function reset(): void {
-        options = [];
+    onLoadCalledWith(opts: ISessionGeneratorPluginOptions): void {
+        this._options.push(opts);
+    }
+
+    newSessionCalledWith(opts: ISessionOptions<any>): void {
+        this._opts.push(opts);
+    }
+
+    reset(): void {
+        this._options = [];
+    }
+
+    get options(): ISessionGeneratorPluginOptions[] {
+        return this._options;
     }
 }
+
+export const STH = new SessionTestHelper();

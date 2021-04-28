@@ -1,3 +1,4 @@
-export interface IElementOptions {
-    maxWaitMs: number;
+export interface IElementOptions<Tl> {
+    locator: Tl;
+    maxWaitMs?: number;
 }
