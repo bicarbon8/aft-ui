@@ -1,5 +1,5 @@
 import { FakeDriver } from "./fake-driver";
-import { LoggingPluginManager } from "../../../aft-core/src";
+import { LoggingPluginManager } from "aft-core";
 import { FakeWebElement } from "../facets/fake-web-element";
 import { FakeLocator } from "../facets/fake-locator";
 import { IFacet } from "../../src/facets/ifacet";

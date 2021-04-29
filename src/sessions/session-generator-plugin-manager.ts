@@ -1,4 +1,4 @@
-import { AbstractPluginManager, IPluginManagerOptions } from "../../../aft-core/src";
+import { AbstractPluginManager, IPluginManagerOptions } from "aft-core";
 import { AbstractSessionGeneratorPlugin, ISessionGeneratorPluginOptions } from "./abstract-session-generator-plugin";
 import { ISession, ISessionOptions } from "./isession";
 import { nameof } from "ts-simple-nameof";

@@ -1,5 +1,12 @@
 {
-    "testloglevel": "info",
-    "test_platform": "windows_10_chrome",
-    "session_provider": "non-existing-session"
+    "sessiongeneratorpluginmanager": {
+        "pluginNames": [],
+        "platform": {
+            "os": "windows",
+            "osVersion": "10",
+            "browser": "chrome",
+            "browserVersion": "90",
+            "deviceName": "Google Pixel 5"
+        }
+    }
 }

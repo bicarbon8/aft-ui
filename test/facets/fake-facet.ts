@@ -1,7 +1,7 @@
 import { FakeWebElement } from "./fake-web-element";
 import { AbstractFacet } from "../../src/facets/abstract-facet";
 import { FakeDriver } from "../sessions/fake-driver";
-import { wait } from "../../../aft-core/src";
+import { wait } from "aft-core";
 import { FakeLocator } from "./fake-locator";
 import { IElementOptions } from "../../src/sessions/ielement-options";
 import { IFacet, IFacetOptions } from "../../src";

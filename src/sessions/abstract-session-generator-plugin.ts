@@ -1,5 +1,5 @@
 import { nameof } from "ts-simple-nameof";
-import { AbstractPlugin, IPluginOptions, LoggingPluginManager } from "../../../aft-core/src";
+import { AbstractPlugin, IPluginOptions, LoggingPluginManager } from "aft-core";
 import { TestPlatform } from "../configuration/test-platform";
 import { ISession, ISessionOptions } from "./isession";
 

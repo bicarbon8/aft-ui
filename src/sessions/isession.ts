@@ -1,4 +1,4 @@
-import { IDisposable, LoggingPluginManager } from "../../../aft-core/src";
+import { IDisposable, LoggingPluginManager } from "aft-core";
 import { IFacet, IFacetOptions } from "../facets/ifacet";
 
 export interface ISessionOptions<Td> {

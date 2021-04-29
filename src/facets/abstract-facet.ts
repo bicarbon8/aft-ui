@@ -1,4 +1,4 @@
-import { LoggingPluginManager, rand } from '../../../aft-core/src';
+import { LoggingPluginManager, rand } from 'aft-core';
 import { IFacet, IFacetOptions } from './ifacet';
 import { IElementOptions } from '../sessions/ielement-options';
 import { ISession } from '../sessions/isession';

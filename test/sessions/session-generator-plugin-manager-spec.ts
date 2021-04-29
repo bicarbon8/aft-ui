@@ -2,7 +2,7 @@ import { FakeSession } from "./fake-session";
 import { STH } from "./session-test-helper";
 import { ISession, SessionGeneratorPluginManager, TestPlatform } from "../../src";
 import { FakeDriver } from "./fake-driver";
-import { aftconfigMgr, IPluginManagerOptions, OptionsManager, rand } from "../../../aft-core/src";
+import { aftconfigMgr, IPluginManagerOptions, OptionsManager, rand } from "aft-core";
 
 describe('SessionGeneratorPluginManager', () => {
     beforeEach(() => {

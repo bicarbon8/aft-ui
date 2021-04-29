@@ -1,5 +1,5 @@
 import { IElementOptions } from "../sessions/ielement-options";
-import { LoggingPluginManager } from "../../../aft-core/src";
+import { LoggingPluginManager } from "aft-core";
 import { ISession } from "../sessions/isession";
 
 export interface IFacetOptions<Td, Te, Tl> {
