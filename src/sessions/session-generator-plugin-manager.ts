@@ -30,7 +30,7 @@ export interface ISessionGeneratorPluginManagerOptions extends ISessionGenerator
  * }
  * ```
  */
-export class SessionGeneratorPluginManager extends AbstractPluginManager<AbstractSessionGeneratorPlugin<any, any, any>, ISessionGeneratorPluginOptions> {
+export class SessionGeneratorPluginManager extends AbstractPluginManager<AbstractSessionGeneratorPlugin, ISessionGeneratorPluginOptions> {
     constructor(options?: ISessionGeneratorPluginManagerOptions) {
         super(nameof(SessionGeneratorPluginManager).toLowerCase(), options);
     }
@@ -41,16 +41,16 @@ export class SessionGeneratorPluginManager extends AbstractPluginManager<Abstrac
      * @param options optional set of configuration used when generating the session.
      * if not specified, the values from {UiConfig} will be used instead
      */
-    async newSession<T extends ISession<any, any, any>>(options?: ISessionOptions<any>): Promise<T> {
-        let plugin: AbstractSessionGeneratorPlugin<any, any, any> = await this.getFirstEnabledPlugin();
+    async newSession(options?: ISessionOptions): Promise<ISession> {
+        let plugin: AbstractSessionGeneratorPlugin = await this.getFirstEnabledPlugin();
         if (plugin) {
             try {
-                return await plugin.newSession<T>(options);
+                return await plugin.newSession(options);
             } catch (e) {
                 return Promise.reject(e);
             }
         }
-        return Promise.reject(`no enabled ISessionPlugin implementation could be found in: [${(await this.optionsMgr.getOption<string[]>(nameof<IPluginManagerOptions>(p => p.pluginNames), [])).join(',')}]`);
+        return Promise.reject(`no enabled AbstractSessionGeneratorPlugin implementation could be found in: [${(await this.optionsMgr.getOption<string[]>(nameof<IPluginManagerOptions>(p => p.pluginNames), [])).join(',')}]`);
     }
 }
 

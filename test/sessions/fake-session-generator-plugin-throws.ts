@@ -1,24 +1,24 @@
 import { AbstractSessionGeneratorPlugin } from "../../src/sessions/abstract-session-generator-plugin";
-import { FakeWebElement } from "../facets/fake-web-element";
-import { FakeLocator } from "../facets/fake-locator";
-import { FakeDriver } from "./fake-driver";
 import { ISessionOptions, ISession } from "../../src";
-import { STH } from "./session-test-helper";
+import { testdata } from "./test-data-helper";
 import { FakeSessionGeneratorPluginOptions } from "./fake-session-generator-plugin";
 import { nameof } from "ts-simple-nameof";
+import { FakeSession } from "./fake-session";
 
-export class FakeSessionGeneratorPluginThrows extends AbstractSessionGeneratorPlugin<FakeDriver, FakeWebElement, FakeLocator> {
+export class FakeSessionGeneratorPluginThrows extends AbstractSessionGeneratorPlugin {
     constructor(options?: FakeSessionGeneratorPluginOptions) {
-        STH.onLoadCalledWith(options);
+        testdata.set('constructor', options);
         super(nameof(FakeSessionGeneratorPluginThrows).toLowerCase(), options);
     }
     async onLoad(): Promise<void> {
-        /* do nothing */
+        testdata.set('onload', true);
     }
-    newSession<T extends ISession<FakeDriver, FakeWebElement, FakeLocator>>(options?: ISessionOptions<FakeDriver>): Promise<T> {
+    newSession(options?: ISessionOptions): Promise<FakeSession> {
+        testdata.set('newsession', options);
         throw new Error("Method not implemented.");
     }
     async dispose(error?: Error): Promise<void> {
-        /* do nothing */
+        testdata.set('dispose', error || true);
+        throw new Error("Method not implemented.");
     }
 }

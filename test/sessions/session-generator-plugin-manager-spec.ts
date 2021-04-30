@@ -1,17 +1,18 @@
 import { FakeSession } from "./fake-session";
-import { STH } from "./session-test-helper";
-import { ISession, SessionGeneratorPluginManager, TestPlatform } from "../../src";
+import { testdata } from "./test-data-helper";
+import { AbstractSessionGeneratorPlugin, ISession, SessionGeneratorPluginManager, TestPlatform } from "../../src";
 import { FakeDriver } from "./fake-driver";
 import { aftconfigMgr, IPluginManagerOptions, OptionsManager, rand } from "aft-core";
+import { nameof } from "ts-simple-nameof";
 
 describe('SessionGeneratorPluginManager', () => {
     beforeEach(() => {
-        STH.reset();
+        testdata.reset();
     });
     
     it('can load session plugin by name', async () => {
         let mgr: SessionGeneratorPluginManager = new SessionGeneratorPluginManager({pluginNames: ['fake-session-generator-plugin']});
-        let fs: FakeSession = await mgr.newSession<FakeSession>();
+        let fs: ISession = await mgr.newSession();
 
         expect(fs).toBeDefined();
         expect(fs.driver).toBeDefined();
@@ -21,26 +22,26 @@ describe('SessionGeneratorPluginManager', () => {
     it('Promise rejected if named session provider not found', async () => {
         let provider: string = 'nonexisting';
         let mgr: SessionGeneratorPluginManager = new SessionGeneratorPluginManager({pluginNames: [provider]});
-        await mgr.newSession<FakeSession>()
+        await mgr.newSession()
             .then((session) => {
                 /* not expected */
                 expect(true).toEqual(false);
             }).catch((reason) => {
-                expect(reason).toEqual(`no enabled ISessionPlugin implementation could be found in: [${provider}]`);
+                expect(reason).toEqual(`no enabled AbstractSessionGeneratorPlugin implementation could be found in: [${provider}]`);
             });
     });
 
     it('handles exceptions thrown by ISession implementations', async () => {
         let provider: string = 'fake-session-generator-plugin-throws';
         let mgr: SessionGeneratorPluginManager = new SessionGeneratorPluginManager({pluginNames: [provider]});
-        await mgr.newSession<FakeSession>()
+        await mgr.newSession()
             .then((session) => {
                 /* not expected */
                 expect(true).toEqual(false);
             }).catch((reason: Error) => {
                 expect(reason.message).toEqual('Method not implemented.');
-                expect(STH.options.length).toBeGreaterThan(0);
-                expect((STH.options[0] as IPluginManagerOptions).pluginNames).toContain(provider);
+                expect(testdata.get('constructor')).toBeDefined();
+                expect(testdata.get<IPluginManagerOptions>('constructor').pluginNames).toContain(provider);
             });
     });
 
@@ -56,8 +57,9 @@ describe('SessionGeneratorPluginManager', () => {
         let customOptMgr: OptionsManager = new OptionsManager(configKey);
 
         let mgr: SessionGeneratorPluginManager = new SessionGeneratorPluginManager({platform: platform, _optMgr: customOptMgr});
-        let fs: FakeSession = await mgr.newSession<FakeSession>();
+        let fs: ISession = await mgr.newSession();
 
         expect(fs).toBeDefined();
+        expect(fs instanceof FakeSession).toBeTruthy();
     });
 });

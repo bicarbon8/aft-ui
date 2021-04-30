@@ -1,23 +1,23 @@
-import { IDisposable, LoggingPluginManager } from "aft-core";
-import { IFacet, IFacetOptions } from "../facets/ifacet";
+import { Clazz, IDisposable, LoggingPluginManager } from "aft-core";
+import { AbstractFacet, IFacetOptions } from "../facets/abstract-facet";
 
-export interface ISessionOptions<Td> {
+export interface ISessionOptions {
     /**
-     * required to instantiate a valid {ISession<any, any, any>}
+     * required to instantiate a valid {ISession}
      */
-    driver?: Td;
+    driver?: unknown;
     /**
-     * required to keep continuity between {ISession<any, any, any>} 
-     * and {IFacet<any, any, any>} logging
+     * required to keep continuity between {ISession} 
+     * and {IFacet} logging
      */
     logMgr?: LoggingPluginManager;
 }
 
-export interface ISession<Td, Te, Tl> extends IDisposable {
-    readonly driver: Td;
+export interface ISession extends IDisposable {
+    readonly driver: unknown;
     readonly logMgr: LoggingPluginManager;
-    getFacet<T extends IFacet<Td, Te, Tl>>(facetType: new (options: IFacetOptions<Td, Te, Tl>) => T, options?: IFacetOptions<Td, Te, Tl>): Promise<T>;
-    goTo(url: string): Promise<void>;
-    refresh(): Promise<void>;
-    resize(width: number, height: number): Promise<void>;
+    getFacet<T extends AbstractFacet>(facetType: Clazz<T>, options?: IFacetOptions): Promise<T>;
+    goTo(url: string): Promise<ISession>;
+    refresh(): Promise<ISession>;
+    resize(width: number, height: number): Promise<ISession>;
 }

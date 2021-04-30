@@ -18,7 +18,7 @@ export interface ISessionGeneratorPluginOptions extends IPluginOptions {
     _logMgr?: LoggingPluginManager;
 }
 
-export abstract class AbstractSessionGeneratorPlugin<Td, Te, Tl> extends AbstractPlugin<ISessionGeneratorPluginOptions> {
+export abstract class AbstractSessionGeneratorPlugin extends AbstractPlugin<ISessionGeneratorPluginOptions> {
     readonly logMgr: LoggingPluginManager;
     private _platform: TestPlatform;
     constructor(key: string, options?: ISessionGeneratorPluginOptions) {
@@ -31,5 +31,5 @@ export abstract class AbstractSessionGeneratorPlugin<Td, Te, Tl> extends Abstrac
         }
         return this._platform;
     }
-    abstract newSession<T extends ISession<Td, Te, Tl>>(options?: ISessionOptions<Td>): Promise<T>;
+    abstract newSession(options?: ISessionOptions): Promise<ISession>;
 }

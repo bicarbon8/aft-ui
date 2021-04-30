@@ -1,17 +1,25 @@
-import { LoggingPluginManager, rand } from 'aft-core';
-import { IFacet, IFacetOptions } from './ifacet';
-import { IElementOptions } from '../sessions/ielement-options';
+import { Clazz, LoggingPluginManager, rand } from 'aft-core';
+import { IElementOptions } from './ielement-options';
 import { ISession } from '../sessions/isession';
 
-export abstract class AbstractFacet<Td, Te, Tl> implements IFacet<Td, Te, Tl> {
-    readonly session: ISession<Td, Te, Tl>;
+export interface IFacetOptions {
+    session?: ISession;
+    logMgr?: LoggingPluginManager;
+    maxWaitMs?: number;
+    index?: number;
+    parent?: AbstractFacet;
+    locator?: unknown;
+}
+
+export abstract class AbstractFacet {
+    readonly session: ISession;
     readonly logMgr: LoggingPluginManager;
     readonly maxWaitMs: number;
     readonly index: number;
-    readonly parent: IFacet<Td, Te, Tl>;
-    readonly locator: Tl;
+    readonly parent: AbstractFacet;
+    readonly locator: unknown;
     
-    constructor(options: IFacetOptions<Td, Te, Tl>) {
+    constructor(options: IFacetOptions) {
         this.locator = this.locator || options.locator;
         this.session = options.session;
         this.logMgr = options.logMgr || new LoggingPluginManager({ logName: `${this.constructor.name}_${rand.guid}` });
@@ -20,8 +28,8 @@ export abstract class AbstractFacet<Td, Te, Tl> implements IFacet<Td, Te, Tl> {
         this.index = (options.index === undefined) ? 0 : options.index;
     }
 
-    abstract getElements(options?: IElementOptions<Tl>): Promise<Te[]>;
-    abstract getElement(options?: IElementOptions<Tl>): Promise<Te>;
-    abstract getFacet<T extends IFacet<Td, Te, Tl>>(facetType: new () => T, options?: IFacetOptions<Td, Te, Tl>): Promise<T>;
-    abstract getRoot(): Promise<Te>;
+    abstract getElements(options?: IElementOptions): Promise<unknown[]>;
+    abstract getElement(options?: IElementOptions): Promise<unknown>;
+    abstract getFacet<T extends AbstractFacet>(facetType: Clazz<T>, options?: IFacetOptions): Promise<T>;
+    abstract getRoot(): Promise<unknown>;
 }

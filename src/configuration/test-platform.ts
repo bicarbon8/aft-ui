@@ -1,4 +1,4 @@
-export interface TestPlatform {
+export interface TestPlatformOptions {
     os?: string;
     osVersion?: string;
     browser?: string;
@@ -7,7 +7,15 @@ export interface TestPlatform {
 }
 
 export class TestPlatform {
-    constructor(options?: TestPlatform) {
+    static ANY: string = '+';
+
+    readonly os: string;
+    readonly osVersion: string;
+    readonly browser: string;
+    readonly browserVersion: string;
+    readonly deviceName: string;
+    
+    constructor(options?: TestPlatformOptions) {
         this.os = options?.os;
         this.osVersion = options?.osVersion;
         this.browser = options?.browser;
@@ -28,33 +36,33 @@ export class TestPlatform {
         str += (this.deviceName) ? this.deviceName : TestPlatform.ANY;
         return str;
     }
-}
 
-export module TestPlatform {
-    export var ANY = '+';
-
-    export function parse(input: string): TestPlatform {
-        let tp: TestPlatform = new TestPlatform();
+    static parse(input: string): TestPlatform {
+        let os: string;
+        let osVer: string;
+        let browser: string;
+        let browserVer: string;
+        let devName: string;
 
         if (input) {
             let parts: string[] = input.split('_');
             if (parts.length > 0) {
-                tp.os = (parts[0] != TestPlatform.ANY) ? parts[0] : null;
+                os = (parts[0] != TestPlatform.ANY) ? parts[0] : null;
             }
             if (parts.length > 1) {
-                tp.osVersion = (parts[1] != TestPlatform.ANY) ? parts[1] : null;
+                osVer = (parts[1] != TestPlatform.ANY) ? parts[1] : null;
             }
             if (parts.length > 2) {
-                tp.browser = (parts[2] != TestPlatform.ANY) ? parts[2] : null;
+                browser = (parts[2] != TestPlatform.ANY) ? parts[2] : null;
             }
             if (parts.length > 3) {
-                tp.browserVersion = (parts[3] != TestPlatform.ANY) ? parts[3] : null;
+                browserVer = (parts[3] != TestPlatform.ANY) ? parts[3] : null;
             }
             if (parts.length > 4) {
-                tp.deviceName = (parts[4] != TestPlatform.ANY) ? parts[4] : null;
+                devName = (parts[4] != TestPlatform.ANY) ? parts[4] : null;
             }
         }
 
-        return tp;
+        return new TestPlatform({os: os, osVersion: osVer, browser: browser, browserVersion: browserVer, deviceName: devName});
     }
 }
