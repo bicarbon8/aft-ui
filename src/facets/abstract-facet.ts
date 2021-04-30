@@ -1,43 +1,35 @@
-import { Wait } from 'aft-core';
-import { IFacet } from './ifacet';
-import { UiConfig } from '../configuration/ui-config';
-import { IFacetOptions } from './ifacet-options';
+import { Clazz, LoggingPluginManager, rand } from 'aft-core';
+import { IElementOptions } from './ielement-options';
 import { ISession } from '../sessions/isession';
-import { IElementOptions } from '../sessions/ielement-options';
 
-export abstract class AbstractFacet<Td, Te, Tl> implements IFacet<Td, Te, Tl> {
-    abstract isDoneLoading(): Promise<boolean>;
-    abstract getElements(locator: Tl, options?: IElementOptions): Promise<Te[]>;
+export interface IFacetOptions {
+    session?: ISession;
+    logMgr?: LoggingPluginManager;
+    maxWaitMs?: number;
+    index?: number;
+    parent?: AbstractFacet;
+    locator?: unknown;
+}
 
-    protected options: IFacetOptions;
-
-    async initialise(options: IFacetOptions): Promise<void> {
-        this.options = options;
+export abstract class AbstractFacet {
+    readonly session: ISession;
+    readonly logMgr: LoggingPluginManager;
+    readonly maxWaitMs: number;
+    readonly index: number;
+    readonly parent: AbstractFacet;
+    readonly locator: unknown;
+    
+    constructor(options: IFacetOptions) {
+        this.locator = this.locator || options.locator;
+        this.session = options.session;
+        this.logMgr = options.logMgr || new LoggingPluginManager({ logName: `${this.constructor.name}_${rand.guid}` });
+        this.parent = options.parent;
+        this.maxWaitMs = (options.maxWaitMs === undefined) ? 10000 : options.maxWaitMs;
+        this.index = (options.index === undefined) ? 0 : options.index;
     }
 
-    async getParent(): Promise<ISession<Td, Te, Tl> | IFacet<Td, Te, Tl>> {
-        return await Promise.resolve(this.options.parent);
-    }
-
-    async getRoot(): Promise<Te> {
-        return await Promise.resolve(this.options.root) as unknown as Te;
-    }
-
-    async getIndex(): Promise<number> {
-        return this.options.index || 0;
-    }
-
-    async getMaxWaitMs(): Promise<number> {
-        return this.options.maxWaitMs || await UiConfig.loadWaitDuration();
-    }
-
-    async waitUntilDoneLoading(msDuration?: number): Promise<void> {
-        if (!msDuration) {
-            msDuration = await UiConfig.loadWaitDuration();
-        }
-        await Wait.forCondition(async () => {
-            let done: boolean = await this.isDoneLoading();
-            return done;
-        }, msDuration);
-    }
+    abstract getElements(options?: IElementOptions): Promise<unknown[]>;
+    abstract getElement(options?: IElementOptions): Promise<unknown>;
+    abstract getFacet<T extends AbstractFacet>(facetType: Clazz<T>, options?: IFacetOptions): Promise<T>;
+    abstract getRoot(): Promise<unknown>;
 }

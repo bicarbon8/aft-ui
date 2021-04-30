@@ -1,260 +1,175 @@
 # AFT-UI
-Automation Framework for Testing (AFT) package supporting UI testing using the Page Object Model (POM) to streamline UI test development and also supporting extension via plugins to support systems such as Selenium and Cypress.
+Automated Functional Testing (AFT) package supporting UI interactions using the Page Object Model (POM) to streamline UI test development and also supporting extension via plugins to support systems such as Selenium and Cypress.
 
-*NOTE: support for Selenium, Cypress and any other frameworks are provided via their respective AFT packages*
+## Installation
+`> npm i aft-ui`
 
 ## Page Object Model (POM)
-![aft-ui-pom](aft-ui-pom.png)
+the POM is a standard design pattern used in UI and layout testing. AFT-UI supports this model via an `AbstractFacet` class that is made up of one or more `AbstractFacet` classes and / or elements encapsulating logical blocks of functionality on the page. The `aft-ui` package supports development of libraries used to generate UI test sessions (via the `SessionGeneratorPluginManager`, `AbstractSessionGeneratorPlugin`, classes and `ISession` interface).
 
-the POM is a standard design pattern used in UI and layout testing. AFT-UI supports this model via a `Page` class that is made up of one or more ~~`Widget`~~ `Container` classes encapsulating logical blocks of functionality on the page. the ~~`Widget`~~ `Container` is then made up of one or more `IFacet` objects. Take the following as an example of how one could interact with the following page https://the-internet.herokuapp.com/login
-
-### Step 1: create the Page model class
+### Creating a Session Generator Plugin (Selenium)
+the `AbstractSessionGeneratorPlugin` implementation is responsible for creating new UI session instances (classes extending from `ISession`)
 
 ```typescript
-export class HerokuLoginPage extends AbstractFacetContainer {
-    locator: FacetLocator = FacetLocator.css("html");
-    private content(): Promise<HerokuContentWidget> {
-        return this.getWidget(HerokuContentWidget);
+export interface SeleniumSessionGeneratorPluginOptions extends ISessionGeneratorPluginOptions { 
+    url?: string;
+    capabilities?: {};
+}
+
+export class SeleniumSessionGeneratorPlugin extends AbstractSessionGeneratorPlugin {
+    constructor(options?: SeleniumSessionGeneratorPluginOptions) {
+        super('seleniumsessiongeneratorplugin', options);
     }
-    private messages(): Promise<HerokuMessagesWidget> {
-        let wo: ContainerOptions = new ContainerOptions(this.session);
-        wo.maxWaitMs = 20000;
-        return this.getWidget(HerokuMessagesWidget, wo);
+    async onLoad(): Promise<void> {
+        /* do nothing */
     }
-    async navigateTo(): Promise<void> {
-        await this.session.goTo('https://the-internet.herokuapp.com/login');
-        return this.waitUntilDoneLoading();
+    async newSession(options?: ISessionOptions): Promise<SeleniumSession> {
+        if (await this.enabled()) {
+            if (!options?.driver) {
+                try {
+                    let url: string = options?.url || 'http://127.0.0.1:4444/';
+                    let caps: Capabilities = new Capabilities(options?.capabilities || {});
+                    let driver: WebDriver = await new Builder()
+                        .usingServer(url)
+                        .withCapabilities(caps)
+                        .build();
+                    await driver.manage().setTimeouts({implicit: 1000});
+                    await driver.manage().window().maximize();
+                    return new SeleniumSession({
+                        driver: driver,
+                        logMgr: options?.logMgr || this.logMgr
+                    });
+                } catch (e) {
+                    return Promise.reject(e);
+                }
+            }
+            return new SeleniumSession({driver: options.driver, logMgr: options.logMgr || this.logMgr});
+        }
+        return null;
     }
-    async isDoneLoading(): Promise<boolean> {
-        let hc: HerokuContentWidget = await this.content();
-        return hc.isDoneLoading();
-    }
-    async login(username: string, password: string): Promise<void> {
-        let hc: HerokuContentWidget = await this.content();
-        return hc.login(username, password);
-    }
-    async hasMessage(): Promise<boolean> {
-        let hm: HerokuMessagesWidget = await this.messages();
-        return hm.hasMessage();
-    }
-    async getMessage(): Promise<string> {
-        let hm: HerokuMessagesWidget = await this.messages();
-        return hm.getMessage();
+    async dispose(error?: Error): Promise<void> {
+        /* do nothing */
     }
 }
 ```
 
-### Step 2: create the Widgets
+### Create an `ISession` implementation (Selenium)
+the `ISession` implementation is used to keep reference to the running UI session as well as to create instances of the logical UI groups (`AbstractFacet`) which manage interactions with the UI elements
 
 ```typescript
-export class HerokuContentWidget extends Widget {
-    locator: FacetLocator = FacetLocator.id("content");
-
-    private async usernameInput(): Promise<IFacet> {
-        return this.findFirst(FacetLocator.id("username"));
-    }
-    private async passwordInput(): Promise<IFacet> {
-        return this.findFirst(FacetLocator.id("password"));
-    }
-    private async loginButton(): Promise<IFacet> {
-        return this.findFirst(FacetLocator.css("button.radius"));
-    }
-    async isDoneLoading(): Promise<boolean> {
-        let ui: IFacet = await this.usernameInput();
-        let pi: IFacet = await this.passwordInput();
-        let lb: IFacet = await this.loginButton();
-        let uiDisplayed: boolean = await ui.displayed();
-        let piDisplayed: boolean = await pi.displayed();
-        let lbDisplayed: boolean = await lb.displayed();
-        return uiDisplayed && piDisplayed && lbDisplayed;
-    }
-    async login(username: string, password: string): Promise<void> {
-        let ui: IFacet = await this.usernameInput();
-        await ui.text(username);
-        let pi: IFacet = await this.passwordInput();
-        await pi.text(password);
-        return this.clickSearchButton();
-    }
-    async clickSearchButton(): Promise<void> {
-        let lb: IFacet = await this.loginButton();
-        return lb.click();
-    }
+export interface SeleniumSessionOptions extends ISessionOptions {
+    driver?: WebDriver; // overrides 'unknown' driver type from 'ISessionOptions'
 }
-```
-```typescript
-export class HerokuMessagesWidget extends Widget {
-    locator: FacetLocator = FacetLocator.id("flash-messages");
-    private async message(): Promise<WebElement> {
-        return this.findFirst(FacetLocator.id("flash"));
+
+export class SeleniumSession implements ISession {
+    readonly driver: WebDriver; // overrides 'unknown' driver type from 'ISession'
+    readonly logMgr: LoggingPluginManager;
+    constructor(options: SeleniumSessionOptions) {
+        this._driver = options.driver;
+        this.logMgr = options.logMgr || new LoggingPluginManager({logName: `SeleniumSession_${this.driver?.getSession().then(s => s.getId())}`});
     }
-    async isDoneLoading(): Promise<boolean> {
-        return this.hasMessage();
+    async getFacet<T extends AbstractFacet>(facetType: Clazz<T>, options?: IFacetOptions): Promise<T> {
+        options = options || {};
+        options.session = options.session || this;
+        options.logMgr = options.logMgr || this.logMgr;
+        let facet: T = new facetType(options);
+        return facet;
     }
-    async hasMessage(): Promise<boolean> {
+    async goTo(url: string): Promise<SeleniumSession> {
         try {
-            let el: IFacet = await this.message();
-            return el !== undefined;
+            await this.driver?.get(url);
         } catch (e) {
+            return Promise.reject(e);
+        }
+    }
+    async refresh(): Promise<SeleniumSession> {
+        try {
+            await this.driver?.navigate().refresh();
+        } catch (e) {
+            return Promise.reject(e);
+        }
+    }
+    async resize(width: number, height: number): Promise<SeleniumSession> {
+        try {
+            await this.driver?.manage().window().setSize(width, height);
+        } catch (e) {
+            return Promise.reject(e);
+        }
+    }
+    async dispose(error?: Error): Promise<void> {
+        if (error) {
+            this.logMgr.warn(`Error: SeleniumSession - ${error.message}`);
+        }
+        this.logMgr.trace(`shutting down SeleniumSession: ${await this.driver?.getSession().then(s => s.getId()))}`);
+        await this.driver?.quit();
+    }
+}
+```
+
+### Create an `AbstractFacet` implementation (Selenium)
+the `AbstractFacet` represents a logical container / section of the UI and is responsible for providing a resilient lookup mechanism for sub-facets or individual elements in the UI
+```typescript
+export interface SeleniumFacetOptions extends IFacetOptions {
+    locator?: Locator; // overrides 'unknown' type from 'IFacetOptions'
+    session?: SeleniumSession; // overrides 'ISession' type from 'IFacetOptions'
+    parent?: SeleniumFacet; // overrides 'AbstractFacet' type from 'IFacetOptions'
+}
+
+export interface WebElementOptions extends IElementOptions {
+    locator: Locator; // overrides 'unknown' type from 'IElementOptions'
+}
+
+export class SeleniumFacet extends AbstractFacet {
+    readonly locator: Locator; // overrides 'unknown' type from 'AbstractFacet'
+    readonly session: SeleniumSession; // overrides 'ISession' type from 'AbstractFacet'
+    readonly parent: SeleniumFacet; // overrides 'AbstractFacet' type from 'AbstractFacet'
+    async getElements(options: WebElementOptions): Promise<WebElement[]> {
+        let elements: WebElement[]
+        await wait.untilTrue(async () => {
+            elements = await this.getRoot().then(r => r.findElements(options.locator));
+            return elements.length > 0;
+        }, options.maxWaitMs || 0);
+        return elements;
+    }
+    async getElement(options: WebElementOptions): Promise<WebElement> {
+        let element: WebElement;
+        await wait.untilTrue(async () => {
+            element = await this.getRoot().then(r => r.findElement(options.locator));
+            return !!element;
+        }, options.maxWaitMs || 0);
+        return element;
+    }
+    async getFacet<T extends AbstractFacet>(facetType: Clazz<T>, options?: SeleniumFacetOptions): Promise<T> {
+        options = options || {};
+        options.parent = options.parent || this;
+        options.session = options.session || this.session;
+        options.logMgr = options.logMgr || this.logMgr;
+        options.maxWaitMs = (options.maxWaitMs === undefined) ? this.maxWaitMs : options.maxWaitMs;
+        let facet: T = new facetType(options);
+        return facet;
+    }
+    async getRoot(): Promise<WebElement>  {
+        let el: WebElement;
+        await wait.untilTrue(async () => {
+            let parent = this.parent;
+            if (parent) {
+                let els: WebElement[] = await parent.getRoot()
+                    .then(r => r.findElements(this.locator));
+                el = els[this.index];
+            } else {
+                let els: WebElement[] = await this.session.driver.findElements(this.locator));
+                el = els[this.index];
+            }
+            if (el) {
+                return true;
+            }
             return false;
-        }
-    }
-    async getMessage(): Promise<string> {
-        let exists: boolean = await this.hasMessage();
-        if (exists) {
-            let el: IFacet = await this.message();
-            return el.text();
-        }
-        return Promise.reject("no message could be found");
+        }, this.maxWaitMs);
+        return el;
     }
 }
 ```
-### Step 3: use them to interact with the web application
-
-```typescript
-let session: ISession = await SessionGenerator.get(); // creates instance of specified ISession Plugin and calls ISession.initialise before returning
-let opts: ContainerOptions = new ContainerOptions(session);
-let loginPage: HerokuLoginPage = new HerokuLoginBasePage(opts);
-await loginPage.navigateTo(); // navigates to Heroku Login
-await loginPage.login("tomsmith", "SuperSecretPassword!");
-await Wait.forCondition(() => loginPage.hasMessage(), 20000);
-let message: string = await loginPage.getMessage();
-expect(message).toContain("You logged into a secure area!");
-```
-
-## Adding Plugins
-plugins can be added to support frameworks such as Selenium and Cypress. Doing so involves a small amount of work to create the adapter layer, but afterwards should work identially between these different systems.
-
-### Step 1: create an `ISession` Implementation
-the `ISession` is the system providing your UI session interface. In Selenium, this is the _WebDriver_. To create a new `ISession` implementation, which will be returned by the `SessionGenerator.get` method after calling the `ISession.initialise` method, follow the below example on how to add support for using BrowserStack sessions:
-
-```typescript
-export class BrowserStackSession implements ISession, IDisposable {
-    driver: WebDriver;
-    async initialise(options: ISessionOptions): Promise<void> {
-        if (options.driver) {
-            this.driver = options.driver as selenium.WebDriver;
-        } else {
-            let caps: selenium.Capabilities = new selenium.Capabilities();
-            caps.set('browserName', options.platform.browser);
-            caps.set('browser_version', options.platform.browserVersion);
-            caps.set('os', options.platform.os);
-            caps.set('os_version', options.platform.osVersion);
-            caps.set('resolution', '1024x768');
-            caps.set('browserstack.user', '[get_from_configuration]');
-            caps.set('browserstack.key', '[get_from_configuration]'); 
-            let driver: selenium.WebDriver;
-            try {
-                driver = await new selenium.Builder()
-                .usingServer(await BrowserStackConfig.hubUrl())
-                .withCapabilities(caps)
-                .build();
-                let options: selenium.Options = await driver.manage();
-                options.setTimeouts({implicit: 1000});
-                await options.window().maximize();
-            } catch (e) {
-                return Promise.reject(e);
-            }
-            this.driver = driver;
-        }
-    }
-    async dispose(e?: Error) {
-        try {
-            await this.driver.close();
-            await this.driver.quit();
-        } catch (e) {
-            console.log(e);
-        }
-    }
-    async find(locator: FacetLocator): Promise<IFacet[]> {
-        try {
-            let loc: selenium.By = this.getByForFacetLocator(locator);
-            let elements: selenium.WebElement[] = await this.driver.findElements(loc);
-            let facets: IFacet[] = [];
-            for (var i=0; i<elements.length; i++) {
-                let el: selenium.WebElement = elements[i];
-                let index: number = i;
-                let f: SeleniumFacet = new SeleniumFacet(async (): Promise<selenium.WebElement> => {
-                    return await this.driver.findElements(loc)[index];
-                });
-                f.cachedRoot = el;
-                facets.push(f);
-            }
-            return facets;
-        } catch (e) {
-            return Promise.reject(e);
-        }
-    }
-    async goTo(url: string): Promise<void> {
-        try {
-            await this.driver.get(url);
-        } catch (e) {
-            return Promise.reject(e);
-        }
-    }
-}
-```
-
-### Step 2: create an `IFacet` implementation
-the next and final step is to provide the `IFacet` implementation adapter. An `IFacet` implementation is the equivalent of a `WebElement` in Selenium and is used to interact with the elements in the UI. This will look like the below:
-
-```typescript
-export class SeleniumFacet implements IFacet {
-    deferredRoot: Func<void, Promise<selenium.WebElement>>;
-    cachedRoot: selenium.WebElement;
-    constructor(deferredRoot: Func<void, Promise<selenium.WebElement>>) {
-        this.deferredRoot = deferredRoot;
-    }
-    async find(locator: FacetLocator): Promise<IFacet[]> {
-        try {
-            let loc: selenium.By = this.getByForFacetLocator(locator);
-            let elements: selenium.WebElement[] = await this.getRootElement().then((r) => r.findElements(loc));
-            let facets: IFacet[] = [];
-            for (var i=0; i<elements.length; i++) {
-                let el: selenium.WebElement = elements[i];
-                let index: number = i;
-                let f: SeleniumFacet = new SeleniumFacet(async (): Promise<selenium.WebElement> => {
-                    return await this.getRootElement().then((r) => r.findElements(loc)[index]);
-                });
-                f.cachedRoot = el;
-                facets.push(f);
-            }
-            return facets;
-        } catch (e) {
-            return Promise.reject(e);
-        }
-    }
-    async enabled(): Promise<boolean> {
-        return await this.getRootElement().then((r) => r.isEnabled());
-    }
-    async displayed(): Promise<boolean> {
-        return await this.getRootElement().then((r) => r.isDisplayed());
-    }
-    async click(): Promise<void> {
-        await this.getRootElement().then((r) => r.click());
-    }
-    async text(input?: string): Promise<string> {
-        if (input) {
-            this.getRootElement().then((r) => r.sendKeys(input));
-            return this.getRootElement().then((r) => r.getAttribute('value'));
-        }
-        return await this.getRootElement().then((r) => r.getText());
-    }
-    async attribute(key: string): Promise<string> {
-        return await this.getRootElement().then((r) => r.getAttribute(key));
-    }
-    private async getRootElement(): Promise<selenium.WebElement> {
-        if (!this.cachedRoot) {
-            this.cachedRoot = await Promise.resolve(this.deferredRoot());
-        } else {
-            try {
-                // ensure cachedRoot is not stale
-                await this.cachedRoot.isDisplayed();
-            } catch (e) {
-                this.cachedRoot = null;
-                return await this.getRootElement();
-            }
-        }
-        return this.cachedRoot;
-    }
-}
-```
+## aftconfig.json keys and values supported by aft-ui package
+- **sessiongeneratorpluginmanager** - allows for specifying which `AbstractSessionGeneratorPlugin` implementations should be loaded and optionally what `TestPlatform` should be used
+  - **pluginNames** - a `string[]` of names for `AbstractSessionGeneratorPlugin` implementations to load. only one can be used at any given time, but multiple can be listed with the top-most being used unless specifically not enabled
+  - **platform** - an optional `TestPlatform` object listing the _OS_, _OS version_, _Browser_, _Browser version_, and _Device name_ to use when creating new sessions. if not specified here, this value must be specified in the configuration section for the loaded `AbstractSessionGeneratorPlugin`

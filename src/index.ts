@@ -1,12 +1,9 @@
-/* containers */
-export * from './facets/abstract-facet';
-export * from './facets/ifacet-options';
-export * from './facets/ifacet';
 /* configuration */
-export * from './configuration/ui-config';
 export * from './configuration/test-platform';
+/* facets */
+export * from './facets/abstract-facet';
+export * from './facets/ielement-options';
 /* sessions */
-export * from './sessions/isession-options';
+export * from './sessions/abstract-session-generator-plugin';
 export * from './sessions/isession';
-export * from './sessions/session-generator';
-export * from './sessions/ielement-options';
+export * from './sessions/session-generator-plugin-manager';
